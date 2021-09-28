@@ -28,7 +28,7 @@ class Procedure():
         f.write(f'### {self}\n')
         if self._reset_timestep_before_run:
             f.write(f'{"reset_timestep":<15} 0\n')
-        f.write('\n')
+            f.write('\n')
         f.write(f'{"dump":<15} dump_{self} all custom {self._dump_every} '
                 f'{self._dump_fname} id mol type q xs ys zs ix iy iz\n')
         if self._dump_image:
@@ -907,7 +907,7 @@ class RgMeasurement(Procedure):
 
         f.write(f'{"compute":<15} {rg_chunk_id} {rg_group_id} '
                 f'gyration/chunk {mol_chunk_id}  # Rg of each molecule\n')
-        f.write(f'{"variable":<15} Rg equal ave(c_{rg_chunk_id}  '
+        f.write(f'{"variable":<15} Rg equal ave(c_{rg_chunk_id})  '
                 '# average Rg of all molecules\n')
         f.write(
             f'{"fix":<15} fAVETIME {rg_group_id} ave/time '

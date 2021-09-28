@@ -133,7 +133,6 @@ undump          dump_Equilibration
 
 
 ### NPT
-
 dump            dump_NPT all custom 10000 npt.lammpstrj id mol type q xs ys zs ix iy iz
 restart         10000000 NPT.restart
 
@@ -145,7 +144,6 @@ undump          dump_NPT
 
 
 ### NVT
-
 dump            dump_NVT all custom 10000 nvt.lammpstrj id mol type q xs ys zs ix iy iz
 restart         100000000 NVT.restart
 
