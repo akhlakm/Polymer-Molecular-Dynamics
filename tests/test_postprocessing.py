@@ -1,7 +1,7 @@
 import pytest
 
 from pmd.entry import analyze
-from pmd.postprocessing.Analysis import calculate_MSD, calculate_Tg
+from pmd.postprocessing.Analysis import calculate_diffusivity, calculate_MSD, calculate_Tg
 from pmd.postprocessing.TrajectoryReader import (read_lammpstrj,
                                                  read_lammpstrj_by_type)
 
@@ -128,5 +128,31 @@ def test_calculate_Tg_cli(caplog, test_data):
     assert 'Glass transition temperature' in caplog.text
     assert round(Tg, 1) == 295.2
 
+    # raises Error if no result file name is given
     with pytest.raises(ValueError):
         Tg = analyze.main(['-p', 'Tg'])
+
+
+@pytest.mark.filterwarnings("ignore")
+def test_calculate_diffusivity(data_path):
+    avg, std, slope, nblock = calculate_diffusivity(data_path)
+
+    assert round(avg, 3) == -5.774
+    assert round(std, 3) == 0.054
+    assert round(slope, 3) == 1.001
+    assert nblock == 10
+
+
+@pytest.mark.filterwarnings("ignore")
+def test_calculate_diffusivity_cli(data_path):
+    avg, std, slope, nblock = analyze.main([str(data_path), '-p', 'D'])
+
+    assert round(avg, 3) == -5.774
+    assert round(std, 3) == 0.054
+    assert round(slope, 3) == 1.001
+    assert nblock == 10
+
+    # The default result folder name is "result", which is not available
+    # in this unit test, so this should return an error
+    with pytest.raises(ValueError):
+        avg, std, slope, nblock = analyze.main(['-p', 'D'])
