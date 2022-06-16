@@ -1,7 +1,8 @@
 import pytest
 
 from pmd.entry import analyze
-from pmd.postprocessing.Analysis import calculate_diffusivity, calculate_MSD, calculate_Tg
+from pmd.postprocessing.Analysis import (calculate_diffusivity, calculate_MSD,
+                                         calculate_Tg)
 from pmd.postprocessing.TrajectoryReader import (read_lammpstrj,
                                                  read_lammpstrj_by_type)
 
