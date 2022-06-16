@@ -3,7 +3,7 @@ import sys
 from .core import (EMC, NPT, NVT, PSP, Equilibration, Lammps, Minimization,
                    MSDMeasurement, Pmd, ShearDeformation, Slurm, SolventSystem,
                    System, TensileDeformation, TgMeasurement, Torque)
-from .postprocessing import (calculate_Tg, calculate_diffusivity,
+from .postprocessing import (calculate_diffusivity, calculate_Tg,
                              read_lammpstrj, read_lammpstrj_by_type)
 
 if sys.version_info[:2] >= (3, 8):
