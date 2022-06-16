@@ -90,10 +90,17 @@ def calculate_diffusivity(result_folder: str = 'result',
         process_dict = {}
         block_dict = {}
         file_counter = 0
+        duration = 0
+        if not os.path.isdir(dir):
+            Pmdlogging.warning(
+                'Provided result dir is not a directory. '
+                'If you used MSDMeasurement procedure, a folder '
+                'should be created with result files in it.')
         for root, dirs, files in os.walk(dir):
             for file in files:
                 parts = file.split('.')[0].split('_')
-                if file.endswith(".txt") and len(parts) == 3:
+                if file.endswith(".txt") and len(
+                        parts) == 3 and parts[0] == 'msd':
                     file_counter += 1
                     # read file and add to process_dict with starting times
                     # as keys and dfs as values
@@ -104,8 +111,21 @@ def calculate_diffusivity(result_folder: str = 'result',
                                      names=['time', 'msd'])
 
                     process_dict[int(parts[1])] = df
+                    duration = int(parts[2])
 
-        duration = int(parts[2])
+        # if no matching files are found
+        if duration == 0:
+            Pmdlogging.error(f'No matching msd files are found at the {dir} '
+                             'directory.')
+            Pmdlogging.error('The msd file names should be in this pattern: '
+                             'msd_starttime_endtime.txt\n'
+                             'For example: msd_1000000_200000000.txt, '
+                             'msd_2000000_200000000.txt, ...')
+            raise ValueError('No matching msd files are found')
+
+        Pmdlogging.info(f'The duration of the MSDMeasurement is {duration} '
+                        'based on parsing the result file names')
+
         # validate all blocks
         for block in block_list:
             if file_counter % block != 0:
@@ -222,11 +242,12 @@ def calculate_diffusivity(result_folder: str = 'result',
                     curr_best_t2 = time_array[t2]
 
     Pmdlogging.info(f'Diffusivity Avg: {curr_best_dif_mean}, '
-                    f'Std: {curr_best_dif_std}\n'
-                    f'Avg Log-log slope:{curr_best_slope} '
-                    f'from using number of block = {curr_best_block}'
+                    f'Std: {curr_best_dif_std}\n')
+
+    Pmdlogging.info(f'Avg Log-log slope:{round(curr_best_slope, 3)} '
+                    f'from using number of block = {int(curr_best_block)} '
                     'and fitting of data between '
-                    f'time={curr_best_t1} and time={curr_best_t2}')
+                    f'time {curr_best_t1} and {curr_best_t2}')
 
     return (curr_best_dif_mean, curr_best_dif_std, curr_best_slope,
             curr_best_block)
