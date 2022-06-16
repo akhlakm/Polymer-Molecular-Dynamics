@@ -46,3 +46,7 @@ class Pmdlogging():
     @classmethod
     def warning(cls, text: str):
         cls.LOGGER.warning(text)
+
+    @classmethod
+    def error(cls, text: str):
+        cls.LOGGER.error(text)

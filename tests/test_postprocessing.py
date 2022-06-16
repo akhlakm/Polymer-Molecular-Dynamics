@@ -127,3 +127,6 @@ def test_calculate_Tg_cli(caplog, test_data):
 
     assert 'Glass transition temperature' in caplog.text
     assert round(Tg, 1) == 295.2
+
+    with pytest.raises(ValueError):
+        Tg = analyze.main(['-p', 'Tg'])
