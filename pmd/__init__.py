@@ -3,8 +3,8 @@ import sys
 from .core import (EMC, NPT, NVT, PSP, Equilibration, Lammps, Minimization,
                    MSDMeasurement, Pmd, ShearDeformation, Slurm, SolventSystem,
                    System, TensileDeformation, TgMeasurement, Torque)
-from .postprocessing import (calculate_Tg, read_lammpstrj,
-                             read_lammpstrj_by_type)
+from .postprocessing import (calculate_diffusivity, calculate_Tg,
+                             read_lammpstrj, read_lammpstrj_by_type)
 
 if sys.version_info[:2] >= (3, 8):
     from importlib.metadata import PackageNotFoundError, version
@@ -22,6 +22,6 @@ finally:
 __all__ = [
     Lammps, Pmd, Torque, Slurm, System, SolventSystem, EMC, PSP, Minimization,
     Equilibration, TgMeasurement, MSDMeasurement, TensileDeformation,
-    ShearDeformation, NVT, NPT, calculate_Tg, read_lammpstrj,
-    read_lammpstrj_by_type
+    ShearDeformation, NVT, NPT, calculate_diffusivity, calculate_Tg,
+    read_lammpstrj, read_lammpstrj_by_type
 ]

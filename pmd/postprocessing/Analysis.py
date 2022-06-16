@@ -70,11 +70,8 @@ def calculate_Tg(result_fname: str,
 
 
 def calculate_diffusivity(result_folder: str = 'result',
-                          block_list: List[int] = [1, 2, 4, 5, 10, 20],
-                          time_array: List[int] = [
-                              5000000, 10000000, 20000000, 50000000, 100000000,
-                              200000000
-                          ]):
+                          block_list: Optional[List[int]] = None,
+                          time_array: Optional[List[int]] = None):
     '''Method to calculate diffusivity based on the files in the
     result folder obtained from MSDMeasurement Procedure
 
@@ -195,12 +192,21 @@ def calculate_diffusivity(result_folder: str = 'result',
         return dif_mean[best_index], dif_std[best_index], msd_slope_log_mean[
             best_index], block_list[best_index]
 
+    if not block_list:
+        block_list = [1, 2, 4, 5, 10, 20]
+
+    if not time_array:
+        time_array = [
+            5000000, 10000000, 20000000, 50000000, 100000000, 200000000
+        ]
+
     curr_best_dif_mean = 0
     curr_best_dif_std = 0
     curr_best_slope = 0
     curr_best_block = 0
     curr_best_t1 = 0
     curr_best_t2 = 0
+
     block_dict = read_files(result_folder, block_list)
     for t1 in range(len(time_array) - 1):
         for t2 in range(t1 + 1, len(time_array)):
@@ -215,17 +221,15 @@ def calculate_diffusivity(result_folder: str = 'result',
                     curr_best_t1 = time_array[t1]
                     curr_best_t2 = time_array[t2]
 
-    Pmdlogging.info(f'************** Best Result: '
-                    f'{curr_best_t1}-{curr_best_t2}ns **************')
-    Pmdlogging.info(curr_best_dif_mean, curr_best_dif_std, curr_best_slope,
-                    curr_best_block)
+    Pmdlogging.info(f'Diffusivity Avg: {curr_best_dif_mean}, '
+                    f'Std: {curr_best_dif_std}\n'
+                    f'Avg Log-log slope:{curr_best_slope} '
+                    f'from using number of block = {curr_best_block}'
+                    'and fitting of data between '
+                    f'time={curr_best_t1} and time={curr_best_t2}')
 
     return (curr_best_dif_mean, curr_best_dif_std, curr_best_slope,
             curr_best_block)
-
-
-# if __name__ == '__main__':
-#     main()
 
 
 def calculate_MSD(r, ir, box_bounds, id2type=[]):
