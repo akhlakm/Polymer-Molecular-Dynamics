@@ -139,10 +139,12 @@ class EMC(Builder):
                     f.write(param)
                     f.write('\n')
                     for line in param_lines:
-                        if param == 'Pair Coeffs':
+                        if param == 'Pair Coeffs\n':
                             # remove the extra type id in the line
                             # ex: 1 1    0.05    4.00 -> 1    0.05    4.00
-                            line = line.lstrip(line.split()[0])[1:]
+                            stripped = line.split(maxsplit=1)[1]
+                            first, second = stripped.split(maxsplit=1)
+                            line = (f'{first:>8}    {second}')
                         else:
                             for coeff in EMC_COEFF_EXCLUSIONS:
                                 line = line.replace(f' {coeff} ', ' ')
