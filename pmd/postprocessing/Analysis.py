@@ -241,13 +241,15 @@ def calculate_diffusivity(result_folder: str = 'result',
                     curr_best_t1 = time_array[t1]
                     curr_best_t2 = time_array[t2]
 
-    Pmdlogging.info(f'Diffusivity Avg: {curr_best_dif_mean}, '
-                    f'Std: {curr_best_dif_std}\n')
-
-    Pmdlogging.info(f'Avg Log-log slope:{round(curr_best_slope, 3)} '
-                    f'from using number of block = {int(curr_best_block)} '
-                    'and fitting of data between '
-                    f'time {curr_best_t1} and {curr_best_t2}')
+    Pmdlogging.info('Analysis completed!\n'
+                    '--------Diffusivity Results--------\n'
+                    f'Avg: {curr_best_dif_mean}\n'
+                    f'Std: {curr_best_dif_std}'
+                    '-----------Fitting Stats-----------\n'
+                    f'Avg Log-log slope:{round(curr_best_slope, 3)}\n'
+                    f'Number of block used: {int(curr_best_block)}\n'
+                    f'Time range: {curr_best_t1} - {curr_best_t2}\n'
+                    '-----------------------------------')
 
     return (curr_best_dif_mean, curr_best_dif_std, curr_best_slope,
             curr_best_block)
