@@ -56,7 +56,7 @@ class EMC(Builder):
         super().__init__(force_field, EMC_FORCE_FIELD_OPTIONS)
 
     @staticmethod
-    def _remove_brackets_around_asterisks(smiles):
+    def _remove_brackets_around_asterisks(smiles: str) -> str:
         smiles = smiles.replace('[*]', '*')
         return smiles
 
@@ -111,6 +111,7 @@ class EMC(Builder):
                     if line.startswith('#') and line.endswith('Coeffs\n'):
                         key = line.lstrip('# ')
                         params[key] = []
+                    # strip off things like pair_coeff, bond_coeff, etc
                     elif '_coeff' in first_word and key:
                         params[key].append(line.lstrip(first_word))
 
@@ -127,7 +128,7 @@ class EMC(Builder):
                     else:
                         final_file_after_coeffs.append(line)
 
-            # There are double empty lines at the end of EMC data file
+            # there are double empty lines at the end of EMC data file
             final_file_after_coeffs = final_file_after_coeffs[:-1]
 
             # combine data and parameters into the final data file
@@ -138,8 +139,13 @@ class EMC(Builder):
                     f.write(param)
                     f.write('\n')
                     for line in param_lines:
-                        for coeff in EMC_COEFF_EXCLUSIONS:
-                            line = line.replace(f' {coeff} ', ' ')
+                        if param == 'Pair Coeffs':
+                            # remove the extra type id in the line
+                            # ex: 1 1    0.05    4.00 -> 1    0.05    4.00
+                            line = line.lstrip(line.split()[0])[1:]
+                        else:
+                            for coeff in EMC_COEFF_EXCLUSIONS:
+                                line = line.replace(f' {coeff} ', ' ')
                         f.write(line)
                     f.write('\n')
                 for line in final_file_after_coeffs:
@@ -183,7 +189,7 @@ class EMC(Builder):
             f.write(f'{"improper_style":<15} class2\n')
             f.write(f'{"special_bonds":<15} lj/coul 0 0 1\n')
 
-        if self._force_field == 'trappe':
+        elif self._force_field == 'trappe':
             f.write(f'{"pair_style":<15} lj/cut/coul/long 14.0\n')
             f.write(f'{"pair_modify":<15} mix arithmetic tail yes\n')
             f.write(f'{"kspace_style":<15} pppm/cg 1e-4\n')
@@ -209,13 +215,13 @@ class PSP(Builder):
         super().__init__(force_field, PSP_FORCE_FIELD_OPTIONS)
 
     @staticmethod
-    def _add_brackets_to_asterisks(smiles):
+    def _add_brackets_to_asterisks(smiles: str) -> str:
         stars_no_bracket = re.findall(r'(?<!\[)\*(?!\])', smiles)
         if len(stars_no_bracket) == 2:
             smiles = smiles.replace('*', '[*]')
         return smiles
 
-    def _is_opls_force_field(self):
+    def _is_opls_force_field(self) -> bool:
         return self._force_field.startswith('opls')
 
     def _run_psp(self, input_data: dict, density: float, data_fname: str,
@@ -253,10 +259,9 @@ class PSP(Builder):
             )
         finally:
             if cleanup:
-                force_field_dname = [
-                    'ligpargen'
-                ] if self._is_opls_force_field() else ['pysimm']
-                dnames = ['chain_models', 'packmol'] + force_field_dname
+                force_field_dname = 'ligpargen' if self._is_opls_force_field(
+                ) else 'pysimm'
+                dnames = ['chain_models', 'packmol'].append(force_field_dname)
                 for dir in dnames:
                     try:
                         shutil.rmtree(os.path.join(output_dir, dir))
@@ -295,7 +300,7 @@ class PSP(Builder):
 
     def write_solvent_data(self, output_dir, smiles, solvent_smiles, density,
                            natoms_total, length, nsolvents, nchains,
-                           data_fname, cleanup):
+                           data_fname, cleanup) -> None:
 
         smiles = self._add_brackets_to_asterisks(smiles)
         input_data = {
