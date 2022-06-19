@@ -5,6 +5,7 @@ from rdkit import Chem
 from pmd.core.Builder import PSP, Builder
 from pmd.util import Pmdlogging, validate_options
 
+SYSTEM_SIZE_OPTIONS = ('natoms_total', 'nchains_total')
 CHAIN_LENGTH_OPTIONS = ('natoms_per_chain', 'mw_per_chain', 'ru_per_chain')
 
 
@@ -16,25 +17,35 @@ class System:
 
         density (float): Density of the system
 
-        natoms_total (int): Total number of atoms of the system
-
         builder (Builder): Builder (One of `EMC` or `PSP`)
+
+        natoms_total (int): Total number of atoms in the system, one of
+                            this attribute and `nchains_total` has to be
+                            provided but not both (providing both will result
+                            in an error); default: `None`
+
+        nchains_total (int): Total number of polymer chains in the system, one
+                             of this attribute and `natoms_total` has to be
+                             provided but not both (providing both will result
+                             in an error); default: `None`
 
         natoms_per_chain (int): Number of atoms per polymer chain, one of this
                                 attribute, `mw_per_chain`, and `ru_per_chain`
-                                has to be provided but not both (providing both
-                                will result in an error); default: `None`
+                                has to be provided but not more than 1
+                                (providing more than 1 will result in an 
+                                error); default: `None`
 
         mw_per_chain (int): Molecular weight of the polymer, one of this
                             attribute, `natoms_per_chain`, and `ru_per_chain`
-                            has to be provided but not both (providing both
-                            will result in an error); default: `None`
+                            has to be provided but not more than 1
+                            (providing more than 1 will result in an
+                            error); default: `None`
 
         ru_per_chain (int): Number of repeating unit per polymer chain, one of
                             this attribute, `natoms_per_chain`, and
-                            `mw_per_chain` has to be provided but not both
-                            (providing both will result in an error); default:
-                            `None`
+                            `mw_per_chain` has to be provided but not more
+                            than 1 (providing more than 1 will result in an
+                            error); default: `None`
 
         data_fname (str): File name of the output data file, which will be
                           read in by LAMMPS
@@ -45,9 +56,10 @@ class System:
     def __init__(self,
                  smiles: str,
                  density: float,
-                 natoms_total: int,
                  builder: Builder,
                  *,
+                 natoms_total: Optional[int] = None,
+                 nchains_total: Optional[int] = None,
                  natoms_per_chain: Optional[int] = None,
                  mw_per_chain: Optional[int] = None,
                  ru_per_chain: Optional[int] = None,
@@ -60,12 +72,15 @@ class System:
         self._smiles = smiles
         self._density = density
         self._natoms_total = natoms_total
+        self._nchains_total = nchains_total
         self._builder = builder
         self._mw_per_chain = mw_per_chain
         self._natoms_per_chain = natoms_per_chain
         self._ru_per_chain = ru_per_chain
         self._data_fname = data_fname
 
+        # Make sure only 1 system size option is given
+        validate_options(self, SYSTEM_SIZE_OPTIONS)
         # Make sure only 1 chain length option is given
         validate_options(self, CHAIN_LENGTH_OPTIONS)
 
@@ -106,17 +121,21 @@ class System:
             self._length = round(self._mw_per_chain / mw_per_RU)
         else:
             self._length = self._ru_per_chain
-        self._nchains = round(self._natoms_total /
-                              (natoms_per_RU * self._length + 2))
-        ntotal = (self._length * natoms_per_RU + 2) * self._nchains
+
+        if self._natoms_total:
+            # +8 is for end-capping with -CH3
+            self._nchains_total = round(self._natoms_total /
+                                        (natoms_per_RU * self._length + 8))
+        self._natoms_total = (self._length * natoms_per_RU +
+                              8) * self._nchains_total
 
         Pmdlogging.info('System stats generated\n'
                         '--------Polymer Stats--------\n'
                         f'SMILES: {self._smiles}\n'
                         f'Natom_per_RU: {natoms_per_RU}\n'
                         f'length: {self._length}\n'
-                        f'Nchains: {self._nchains}\n'
-                        f'Total number of atoms: {ntotal}\n'
+                        f'Nchains: {self._nchains_total}\n'
+                        f'Total number of atoms: {self._natoms_total}\n'
                         '-----------------------------')
 
     def write_data(self, output_dir: str = '.', cleanup: bool = True) -> None:
@@ -136,7 +155,8 @@ class System:
 
         self._builder.write_data(output_dir, self._smiles, self._density,
                                  self._natoms_total, self._length,
-                                 self._nchains, self._data_fname, cleanup)
+                                 self._nchains_total, self._data_fname,
+                                 cleanup)
 
 
 class SolventSystem(System):
@@ -153,25 +173,35 @@ class SolventSystem(System):
 
         density (float): Density of the system
 
-        natoms_total (int): Total number of atoms of the system
-
         builder (Builder): Builder (One of `EMC` or `PSP`)
+
+        natoms_total (int): Total number of atoms in the system, one of
+                            this attribute and `nchains_total` has to be
+                            provided but not both (providing both will result
+                            in an error); default: `None`
+
+        nchains_total (int): Total number of polymer chains in the system, one
+                             of this attribute and `natoms_total` has to be
+                             provided but not both (providing both will result
+                             in an error); default: `None`
 
         natoms_per_chain (int): Number of atoms per polymer chain, one of this
                                 attribute, `mw_per_chain`, and `ru_per_chain`
-                                has to be provided but not both (providing both
-                                will result in an error); default: `None`
+                                has to be provided but not more than 1
+                                (providing more than 1 will result in an 
+                                error); default: `None`
 
         mw_per_chain (int): Molecular weight of the polymer, one of this
                             attribute, `natoms_per_chain`, and `ru_per_chain`
-                            has to be provided but not both (providing both
-                            will result in an error); default: `None`
+                            has to be provided but not more than 1
+                            (providing more than 1 will result in an
+                            error); default: `None`
 
         ru_per_chain (int): Number of repeating unit per polymer chain, one of
                             this attribute, `natoms_per_chain`, and
-                            `mw_per_chain` has to be provided but not both
-                            (providing both will result in an error); default:
-                            `None`
+                            `mw_per_chain` has to be provided but not more
+                            than 1 (providing more than 1 will result in an
+                            error); default: `None`
 
         data_fname (str): File name of the output data file, which will be
                           read in by LAMMPS
@@ -184,9 +214,10 @@ class SolventSystem(System):
                  solvent_smiles: str,
                  ru_nsolvent_ratio: float,
                  density: float,
-                 natoms_total: int,
                  builder: Builder,
                  *,
+                 natoms_total: Optional[int] = None,
+                 nchains_total: Optional[int] = None,
                  natoms_per_chain: Optional[int] = None,
                  mw_per_chain: Optional[int] = None,
                  ru_per_chain: Optional[int] = None,
@@ -201,8 +232,9 @@ class SolventSystem(System):
 
         super().__init__(smiles,
                          density,
-                         natoms_total,
                          builder,
+                         natoms_total=natoms_total,
+                         nchains_total=nchains_total,
                          natoms_per_chain=natoms_per_chain,
                          mw_per_chain=mw_per_chain,
                          ru_per_chain=ru_per_chain,
@@ -230,32 +262,35 @@ class SolventSystem(System):
         natoms_solvent = mol_solvent.GetNumAtoms(onlyExplicit=0)
 
         # Calculate number of polymer chains and solvents based on target total
-        # number of atoms
+        # number of atoms (+8 is for end-capping with -CH3)
         natoms_total_onechain = (self._ru_nsolvent_ratio * self._length *
                                  natoms_solvent) + (
-                                     self._length * natoms_per_RU + 2)
-        self._nchains = round(self._natoms_total / natoms_total_onechain)
+                                     self._length * natoms_per_RU + 8)
+        if self._natoms_total:
+            self._nchains_total = round(self._natoms_total /
+                                        natoms_total_onechain)
         self._nsolvents = round(self._ru_nsolvent_ratio * self._length *
-                                self._nchains)
+                                self._nchains_total)
 
         # Calculate extra stats for logging use
-        final_nsol_nRU_ratio = self._nsolvents / (self._length * self._nchains)
-        ntotal = self._nsolvents * natoms_solvent + (
-            self._length * natoms_per_RU + 2) * self._nchains
+        final_nsol_nRU_ratio = self._nsolvents / (self._length *
+                                                  self._nchains_total)
+        self._natoms_total = self._nsolvents * natoms_solvent + (
+            self._length * natoms_per_RU + 8) * self._nchains_total
 
         Pmdlogging.info(
             'System stats generated\n'
             '--------Polymer Stats--------\n'
             f'Polymer SMILES: {self._smiles}\n'
             f'Polymer length: {self._length}\n'
-            f'Polymer Nchains: {self._nchains}\n\n'
+            f'Polymer Nchains: {self._nchains_total}\n\n'
             '--------Solvent Stats--------\n'
             f'Solvent SMILES: {self._solvent_smiles}\n'
             f'Solvent number: {self._nsolvents}\n\n'
             '--------System Stats---------\n'
             f'Target Nsolvents/Nrepeatunits: {self._ru_nsolvent_ratio}\n'
             f'Final Nsolvents/Nrepeatunits: {final_nsol_nRU_ratio}\n'
-            f'Total number of atoms: {ntotal}\n'
+            f'Total number of atoms: {self._natoms_total}\n'
             '-----------------------------')
 
     def write_data(self, output_dir: str = '.', cleanup: bool = True) -> None:
@@ -276,5 +311,5 @@ class SolventSystem(System):
         self._builder.write_solvent_data(output_dir, self._smiles,
                                          self._solvent_smiles, self._density,
                                          self._natoms_total, self._length,
-                                         self._nsolvents, self._nchains,
+                                         self._nsolvents, self._nchains_total,
                                          self._data_fname, cleanup)
