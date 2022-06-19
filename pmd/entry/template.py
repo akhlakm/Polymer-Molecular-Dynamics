@@ -1,4 +1,4 @@
-from typing import Dict, Tuple
+from typing import Dict, Optional, Tuple
 
 import inquirer
 
@@ -14,7 +14,7 @@ BUILDER_OPTIONS = ('PSP(force_field=\'opls-lbcc\'',
                    'PSP(force_field=\'gaff2-am1bcc\'',
                    'EMC(force_field=\'pcff\'', 'EMC(force_field=\'opls-aa\'',
                    'EMC(force_field=\'opls-ua\'', 'EMC(force_field=\'trappe\'')
-JOB_OPTIONS = ('Torque', 'Slurm')
+JOB_OPTIONS = ('Torque', 'Slurm', None)
 
 LAMMPS_FIELDS = {
     'TgMeasurement': [
@@ -131,7 +131,7 @@ def decode_anwser(answers: Dict) -> Tuple[str]:
 
 def create_script(file_name: str, system: str, system_size: str,
                   chain_length: str, builder: str, lammps: str,
-                  job: str) -> None:
+                  job: Optional[str]) -> None:
     # indents
     indent = ' ' * 4
     system_indent = ' ' * len(f'{indent}system = pmd.{system}(')
@@ -190,20 +190,22 @@ def create_script(file_name: str, system: str, system_size: str,
         f.write('\n')
 
         # write the Job section
-        f.write(f'{indent}# Define job scheduler settings\n')
-        f.write(f'{indent}job = pmd.{job}(run_lammps=lmp,\n')
-        f.write(f'{job_indent}jobname=\'Your-job-name\',\n')
-        f.write(f'{job_indent}project=\'GT-rramprasad3-CODA20\',\n')
-        f.write(f'{job_indent}nodes=1,\n')
-        f.write(f'{job_indent}{process_number_field}=24,\n')
-        f.write(f'{job_indent}{time_number_field}=\'24:00:00\')\n')
-        f.write('\n')
+        if job:
+            f.write(f'{indent}# Define job scheduler settings\n')
+            f.write(f'{indent}job = pmd.{job}(run_lammps=lmp,\n')
+            f.write(f'{job_indent}jobname=\'Your-job-name\',\n')
+            f.write(f'{job_indent}project=\'GT-rramprasad3-CODA20\',\n')
+            f.write(f'{job_indent}nodes=1,\n')
+            f.write(f'{job_indent}{process_number_field}=24,\n')
+            f.write(f'{job_indent}{time_number_field}=\'24:00:00\')\n')
+            f.write('\n')
 
         # write the Pmd section
+        pmd_job = ', job=job' if job else ''
         f.write(f'{indent}# Create all the files to a folder\n')
-        f.write(f'{indent}run = pmd.Pmd(system=system, lammps=lmp, job=job)'
+        f.write(f'{indent}run = pmd.Pmd(system=system, lammps=lmp{pmd_job})'
                 '\n')
-        f.write(f'{indent}run.create(\'.\', save_config=True)\n')
+        f.write(f'{indent}run.create(output_dir=\'.\', save_config=True)\n')
 
 
 if __name__ == '__main__':
