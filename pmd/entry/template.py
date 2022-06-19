@@ -178,8 +178,8 @@ def create_script(file_name: str, system: str, system_size: str,
             if i == 0:
                 f.write(f'{indent}{indent}pmd.{lammps}({v},\n')
             # special case to change the MSDMeasurement group dynamically
-            elif i == 1 and lammps == 'MSDMeasurement'and system != \
-            'SolventSystem':
+            elif (i == 1 and lammps == 'MSDMeasurement'
+                  and system != 'SolventSystem'):
                 f.write(f'{lammps_indent}group=\'type 1\', '
                         '# change the atom group to track\n')
             elif i == len(LAMMPS_FIELDS[lammps]) - 1:
