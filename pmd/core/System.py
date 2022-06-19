@@ -115,27 +115,35 @@ class System:
         mol = Chem.MolFromSmiles(self._smiles)
         natoms_per_RU = mol.GetNumAtoms(onlyExplicit=0) - 2
         if self._natoms_per_chain:
-            self._length = round(self._natoms_per_chain / natoms_per_RU)
+            self._final_ru_per_chain = round(self._natoms_per_chain /
+                                             natoms_per_RU)
         elif self._mw_per_chain:
             mw_per_RU = Chem.Descriptors.ExactMolWt(mol)
-            self._length = round(self._mw_per_chain / mw_per_RU)
+            self._final_ru_per_chain = round(self._mw_per_chain / mw_per_RU)
         else:
-            self._length = self._ru_per_chain
+            self._final_ru_per_chain = self._ru_per_chain
 
         if self._natoms_total:
             # +8 is for end-capping with -CH3
-            self._nchains_total = round(self._natoms_total /
-                                        (natoms_per_RU * self._length + 8))
-        self._natoms_total = (self._length * natoms_per_RU +
-                              8) * self._nchains_total
+            self._final_nchains_total = round(
+                self._natoms_total /
+                (natoms_per_RU * self._final_ru_per_chain + 8))
+            self._final_natoms_total = (
+                self._final_ru_per_chain * natoms_per_RU +
+                8) * self._final_nchains_total
+        else:
+            self._final_nchains_total = self._nchains_total
+            self._final_natoms_total = (
+                self._final_ru_per_chain * natoms_per_RU +
+                8) * self._nchains_total
 
         Pmdlogging.info('System stats generated\n'
                         '--------Polymer Stats--------\n'
                         f'SMILES: {self._smiles}\n'
                         f'Natom_per_RU: {natoms_per_RU}\n'
-                        f'length: {self._length}\n'
-                        f'Nchains: {self._nchains_total}\n'
-                        f'Total number of atoms: {self._natoms_total}\n'
+                        f'length: {self._final_ru_per_chain}\n'
+                        f'Nchains: {self._final_nchains_total}\n'
+                        f'Total number of atoms: {self._final_natoms_total}\n'
                         '-----------------------------')
 
     def write_data(self, output_dir: str = '.', cleanup: bool = True) -> None:
@@ -154,8 +162,9 @@ class System:
         '''
 
         self._builder.write_data(output_dir, self._smiles, self._density,
-                                 self._natoms_total, self._length,
-                                 self._nchains_total, self._data_fname,
+                                 self._final_natoms_total,
+                                 self._final_ru_per_chain,
+                                 self._final_nchains_total, self._data_fname,
                                  cleanup)
 
 
@@ -250,12 +259,13 @@ class SolventSystem(System):
         mol = Chem.MolFromSmiles(self._smiles)
         natoms_per_RU = mol.GetNumAtoms(onlyExplicit=0) - 2
         if self._natoms_per_chain:
-            self._length = round(self._natoms_per_chain / natoms_per_RU)
+            self._final_ru_per_chain = round(self._natoms_per_chain /
+                                             natoms_per_RU)
         elif self._mw_per_chain:
             mw_per_ru = Chem.Descriptors.ExactMolWt(mol)
-            self._length = round(self._mw_per_chain / mw_per_ru)
+            self._final_ru_per_chain = round(self._mw_per_chain / mw_per_ru)
         else:
-            self._length = self._ru_per_chain
+            self._final_ru_per_chain = self._ru_per_chain
 
         # Get the number of atoms of a solvent molecule
         mol_solvent = Chem.MolFromSmiles(self._solvent_smiles)
@@ -263,27 +273,31 @@ class SolventSystem(System):
 
         # Calculate number of polymer chains and solvents based on target total
         # number of atoms (+8 is for end-capping with -CH3)
-        natoms_total_onechain = (self._ru_nsolvent_ratio * self._length *
-                                 natoms_solvent) + (
-                                     self._length * natoms_per_RU + 8)
+        natoms_total_onechain = (
+            self._ru_nsolvent_ratio * self._final_ru_per_chain *
+            natoms_solvent) + (self._final_ru_per_chain * natoms_per_RU + 8)
         if self._natoms_total:
-            self._nchains_total = round(self._natoms_total /
-                                        natoms_total_onechain)
-        self._nsolvents = round(self._ru_nsolvent_ratio * self._length *
-                                self._nchains_total)
+            self._final_nchains_total = round(self._natoms_total /
+                                              natoms_total_onechain)
+        else:
+            self._final_nchains_total = self._nchains_total
+        self._nsolvents = round(self._ru_nsolvent_ratio *
+                                self._final_ru_per_chain *
+                                self._final_nchains_total)
 
         # Calculate extra stats for logging use
-        final_nsol_nRU_ratio = self._nsolvents / (self._length *
-                                                  self._nchains_total)
-        self._natoms_total = self._nsolvents * natoms_solvent + (
-            self._length * natoms_per_RU + 8) * self._nchains_total
+        final_nsol_nRU_ratio = self._nsolvents / (self._final_ru_per_chain *
+                                                  self._final_nchains_total)
+        self._final_natoms_total = self._nsolvents * natoms_solvent + (
+            self._final_ru_per_chain * natoms_per_RU +
+            8) * self._final_nchains_total
 
         Pmdlogging.info(
             'System stats generated\n'
             '--------Polymer Stats--------\n'
             f'Polymer SMILES: {self._smiles}\n'
-            f'Polymer length: {self._length}\n'
-            f'Polymer Nchains: {self._nchains_total}\n\n'
+            f'Polymer length: {self._final_ru_per_chain}\n'
+            f'Polymer Nchains: {self._final_nchains_total}\n\n'
             '--------Solvent Stats--------\n'
             f'Solvent SMILES: {self._solvent_smiles}\n'
             f'Solvent number: {self._nsolvents}\n\n'
@@ -308,8 +322,8 @@ class SolventSystem(System):
             None
         '''
 
-        self._builder.write_solvent_data(output_dir, self._smiles,
-                                         self._solvent_smiles, self._density,
-                                         self._natoms_total, self._length,
-                                         self._nsolvents, self._nchains_total,
-                                         self._data_fname, cleanup)
+        self._builder.write_solvent_data(
+            output_dir, self._smiles, self._solvent_smiles, self._density,
+            self._final_natoms_total, self._final_ru_per_chain,
+            self._nsolvents, self._final_nchains_total, self._data_fname,
+            cleanup)

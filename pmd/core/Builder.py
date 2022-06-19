@@ -34,10 +34,18 @@ class Builder:
             raise ValueError(f'Invalid {self} force_field, valid options are '
                              f'{", ".join(options)}')
 
-    def write_data(self) -> None:
+    def write_data(self, output_dir: str, smiles: str, density: float,
+                   natoms_total: int, length: int, nchains: int,
+                   data_fname: str, cleanup: bool) -> None:
         raise NotImplementedError
 
-    def write_functional_form(self) -> None:
+    def write_solvent_data(self, output_dir: str, smiles: str,
+                           solvent_smiles: str, density: float,
+                           natoms_total: int, length: int, nsolvents: int,
+                           nchains: int, data_fname, cleanup) -> None:
+        raise NotImplementedError
+
+    def write_functional_form(self, f: TextIOWrapper) -> None:
         raise NotImplementedError
 
 
@@ -294,9 +302,10 @@ class PSP(Builder):
         }
         self._run_psp(input_data, density, data_fname, output_dir, cleanup)
 
-    def write_solvent_data(self, output_dir, smiles, solvent_smiles, density,
-                           natoms_total, length, nsolvents, nchains,
-                           data_fname, cleanup) -> None:
+    def write_solvent_data(self, output_dir: str, smiles: str,
+                           solvent_smiles: str, density: float,
+                           natoms_total: int, length: int, nsolvents: int,
+                           nchains: int, data_fname, cleanup) -> None:
 
         smiles = self._add_brackets_to_asterisks(smiles)
         input_data = {

@@ -1,14 +1,15 @@
 pmd.System:
   smiles: '*CC(*)c1ccccc1'
   density: 0.5
-  natoms_total: 520
-  nchains_total: 5
+  natoms_total: 500
   builder:
     pmd.EMC:
       force_field: pcff
   natoms_per_chain: 100
   data_fname: data.lmps
-  length: 6
+  final_ru_per_chain: 6
+  final_nchains_total: 5
+  final_natoms_total: 520
 pmd.Lammps:
   read_data_from: data.lmps
   get_functional_form_from:
