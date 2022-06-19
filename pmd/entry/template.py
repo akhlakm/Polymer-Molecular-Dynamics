@@ -1,7 +1,47 @@
+from typing import Dict, Tuple
+
+from pmd.util.Log import Pmdlogging
+
 import inquirer
 
+SYSTEM_OPTIONS = ('System', 'SolventSystem', 'GasSystem')
+SYSTEM_SIZE_OPTIONS = ('natoms_total=10000', 'nchains_total=50')
+CHAIN_LENGTH_OPTIONS = ('natoms_per_chain=150', 'ru_per_chain=25',
+                        'mw_per_chain=1000')
+BUILDER_OPTIONS = ('PSP(force_field=\'opls-lbcc\'',
+                   'PSP(force_field=\'opls-cm1a\'',
+                   'PSP(force_field=\'gaff2-gasteiger\'',
+                   'PSP(force_field=\'gaff2-am1bcc\'',
+                   'EMC(force_field=\'pcff\'', 'EMC(force_field=\'opls-aa\'',
+                   'EMC(force_field=\'opls-ua\'', 'EMC(force_field=\'trappe\'')
+JOB_OPTIONS = ('Torque', 'Slurm')
 
-def main():
+LAMMPS_FIELDS = {
+    'TgMeasurement': [
+        'Tinit=600', 'Tfinal=100', 'Tinterval=20', 'step_duration=1000000',
+        'dump_image=True', 'reset_timestep_before_run=True'
+    ],
+    'MSDMeasurement': [
+        'T=300', 'group=system.solvent_group', 'create_block_every=10000000',
+        'duration=200000000', 'dump_image=True',
+        'reset_timestep_before_run=True'
+    ],
+    'ShearDeformation': [
+        'duration=10**7', 'erate=10**-6', 'T=300', 'dump_image=True',
+        'reset_timestep_before_run=True'
+    ],
+    'TensileDeformation': [
+        'duration=10**7', 'erate=10**-6', 'T=300', 'P=1', 'dump_image=True',
+        'reset_timestep_before_run=True'
+    ],
+    'HeatFluxMeasurement': [
+        'duration=10**7', 'T=300', 'dump_image=True',
+        'reset_timestep_before_run=True'
+    ]
+}
+
+
+def main() -> None:
     questions = [
         inquirer.List(
             'system',
@@ -54,9 +94,117 @@ def main():
             message="What job scheduling system do you use?",
             choices=['1. Torque', '2. Slurm', '3. N/A (run locally)'],
         ),
+        inquirer.Text('file_name',
+                      message='Create input script to file',
+                      default='mkinput.py'),
     ]
+
     answers = inquirer.prompt(questions)
-    print(answers)
+    (file_name, system, system_size, chain_length, builder, lammps,
+     job) = decode_anwser(answers)
+    create_script(file_name, system, system_size, chain_length, builder,
+                  lammps, job)
+    Pmdlogging.info(f'Template PMD script - {file_name} successfully created!')
+    Pmdlogging.info('Change the fields in the file to customize your system '
+                    'and simulation. Then create files by running:\n'
+                    f'       $ python {file_name}')
+
+
+def decode_anwser(answers: Dict) -> Tuple[str]:
+    file_name = answers['file_name']
+
+    # replace the dict's values with the leading numbers
+    answers = {
+        k: int(v[0]) - 1
+        for k, v in answers.items() if k != 'file_name'
+    }
+
+    # use the leading number as index to get the options
+    system = SYSTEM_OPTIONS[answers['system']]
+    system_size = SYSTEM_SIZE_OPTIONS[answers['system_size']]
+    chain_length = CHAIN_LENGTH_OPTIONS[answers['chain_length']]
+    builder = BUILDER_OPTIONS[answers['builder']]
+    lammps = [*LAMMPS_FIELDS][answers['lammps']]
+    job = JOB_OPTIONS[answers['job']]
+
+    return file_name, system, system_size, chain_length, builder, lammps, job
+
+
+def create_script(file_name: str, system: str, system_size: str,
+                  chain_length: str, builder: str, lammps: str,
+                  job: str) -> None:
+    # indents
+    indent = ' ' * 4
+    system_indent = ' ' * len(f'{indent}system = pmd.{system}(')
+    lammps_indent = ' ' * len(f'{indent}{indent}pmd.{lammps}(')
+    job_indent = ' ' * len(f'{indent}job = pmd.{job}(')
+
+    # data
+    Teq = 300 if lammps != 'TgMeasurement' else 600
+    Tmax = 600 if lammps != 'TgMeasurement' else 1000
+    process_number_field = 'ppn' if job == 'Torque' else 'ntasks_per_node'
+    time_number_field = 'walltime' if job == 'Torque' else 'time'
+
+    with open(file_name, 'w') as f:
+        f.write('import pmd\n')
+        f.write('\n')
+        f.write('if __name__ == \'__main__\':\n')
+
+        # write the System section
+        f.write(f'{indent}# Define the system\n')
+        if system == 'SolventSystem':
+            f.write(f'{indent}system = pmd.{system}(smiles=\'*CC*\', '
+                    '# your polymer SMILES\n')
+            f.write(f'{system_indent}solvent_smiles=\'CCO\', '
+                    '# your solvent SMILES\n')
+            f.write(f'{system_indent}ru_nsolvent_ratio=\'0.1\',\n')
+        else:
+            f.write(f'{indent}system = pmd.{system}(smiles=\'*CC*\', '
+                    '# change to your SMILES of interest\n')
+        f.write(f'{system_indent}density=0.8,\n')
+        f.write(f'{system_indent}{system_size},\n')
+        f.write(f'{system_indent}{chain_length},\n')
+        f.write(f'{system_indent}builder=pmd.{builder}))\n')
+        f.write('\n')
+
+        # write the Lammps section
+        f.write(f'{indent}# Define LAMMPS simulation procedures\n')
+        f.write(f'{indent}lmp = pmd.Lammps(read_data_from=system)\n')
+        f.write(f'{indent}lmp.add_procedure(pmd.Minimization()) '
+                '# avoid atom overlap\n')
+        f.write(f'{indent}lmp.add_procedure(pmd.Equilibration(Teq={Teq}, '
+                f'Tmax={Tmax})) # 21-step equil.\n')
+        f.write(f'{indent}lmp.add_procedure(\n')
+        for i, v in enumerate(LAMMPS_FIELDS[lammps]):
+            if i == 0:
+                f.write(f'{indent}{indent}pmd.{lammps}({v},\n')
+            # special case to change the MSDMeasurement group dynamically
+            elif i == 1 and lammps == 'MSDMeasurement' \
+                and system != 'SolventSystem':
+                f.write(f'{lammps_indent}group=\'type 1\', '
+                        '# change the atom group to track\n')
+            elif i == len(LAMMPS_FIELDS[lammps]) - 1:
+                f.write(f'{lammps_indent}{v}))\n')
+            else:
+                f.write(f'{lammps_indent}{v},\n')
+
+        f.write('\n')
+
+        # write the Job section
+        f.write(f'{indent}# Define job scheduler settings\n')
+        f.write(f'{indent}job = pmd.{job}(run_lammps=lmp,\n')
+        f.write(f'{job_indent}jobname=\'Your-job-name\',\n')
+        f.write(f'{job_indent}project=\'GT-rramprasad3-CODA20\',\n')
+        f.write(f'{job_indent}nodes=1,\n')
+        f.write(f'{job_indent}{process_number_field}=24,\n')
+        f.write(f'{job_indent}{time_number_field}=\'24:00:00\')\n')
+        f.write('\n')
+
+        # write the Pmd section
+        f.write(f'{indent}# Create all the files to a folder\n')
+        f.write(f'{indent}run = pmd.Pmd(system=system, lammps=lmp, job=job)'
+                '\n')
+        f.write(f'{indent}run.create(\'.\', save_config=True)\n')
 
 
 if __name__ == '__main__':
