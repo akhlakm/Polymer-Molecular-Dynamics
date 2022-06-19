@@ -56,7 +56,7 @@ class EMC(Builder):
         super().__init__(force_field, EMC_FORCE_FIELD_OPTIONS)
 
     @staticmethod
-    def _remove_brackets_around_asterisks(smiles):
+    def _remove_brackets_around_asterisks(smiles: str) -> str:
         smiles = smiles.replace('[*]', '*')
         return smiles
 
@@ -111,6 +111,7 @@ class EMC(Builder):
                     if line.startswith('#') and line.endswith('Coeffs\n'):
                         key = line.lstrip('# ')
                         params[key] = []
+                    # strip off things like pair_coeff, bond_coeff, etc
                     elif '_coeff' in first_word and key:
                         params[key].append(line.lstrip(first_word))
 
@@ -127,7 +128,7 @@ class EMC(Builder):
                     else:
                         final_file_after_coeffs.append(line)
 
-            # There are double empty lines at the end of EMC data file
+            # there are double empty lines at the end of EMC data file
             final_file_after_coeffs = final_file_after_coeffs[:-1]
 
             # combine data and parameters into the final data file
@@ -138,8 +139,15 @@ class EMC(Builder):
                     f.write(param)
                     f.write('\n')
                     for line in param_lines:
-                        for coeff in EMC_COEFF_EXCLUSIONS:
-                            line = line.replace(f' {coeff} ', ' ')
+                        if param == 'Pair Coeffs\n':
+                            # remove the extra type id in the line
+                            # ex: 1 1    0.05    4.00 -> 1    0.05    4.00
+                            stripped = line.split(maxsplit=1)[1]
+                            first, second = stripped.split(maxsplit=1)
+                            line = (f'{first:>8}    {second}')
+                        else:
+                            for coeff in EMC_COEFF_EXCLUSIONS:
+                                line = line.replace(f' {coeff} ', ' ')
                         f.write(line)
                     f.write('\n')
                 for line in final_file_after_coeffs:
@@ -155,10 +163,8 @@ class EMC(Builder):
                 for ext in EMC_EXTS:
                     fnames.append(f'{tmp_file_prefilx}.{ext}')
                 for fname in fnames:
-                    try:
+                    if os.path.isfile(fname):
                         os.remove(fname)
-                    except Exception:
-                        pass
 
             os.chdir(previous_dir)
 
@@ -183,7 +189,7 @@ class EMC(Builder):
             f.write(f'{"improper_style":<15} class2\n')
             f.write(f'{"special_bonds":<15} lj/coul 0 0 1\n')
 
-        if self._force_field == 'trappe':
+        elif self._force_field == 'trappe':
             f.write(f'{"pair_style":<15} lj/cut/coul/long 14.0\n')
             f.write(f'{"pair_modify":<15} mix arithmetic tail yes\n')
             f.write(f'{"kspace_style":<15} pppm/cg 1e-4\n')
@@ -209,13 +215,13 @@ class PSP(Builder):
         super().__init__(force_field, PSP_FORCE_FIELD_OPTIONS)
 
     @staticmethod
-    def _add_brackets_to_asterisks(smiles):
+    def _add_brackets_to_asterisks(smiles: str) -> str:
         stars_no_bracket = re.findall(r'(?<!\[)\*(?!\])', smiles)
         if len(stars_no_bracket) == 2:
             smiles = smiles.replace('*', '[*]')
         return smiles
 
-    def _is_opls_force_field(self):
+    def _is_opls_force_field(self) -> bool:
         return self._force_field.startswith('opls')
 
     def _run_psp(self, input_data: dict, density: float, data_fname: str,
@@ -231,13 +237,13 @@ class PSP(Builder):
             with HiddenPrints():
                 amor = ab.Builder(pd.DataFrame(data=input_data),
                                   density=density,
-                                  OutDir=output_dir)
+                                  outdir=output_dir)
                 amor.Build()
 
-                if self._is_opls_force_field:
+                if self._is_opls_force_field():
                     amor.get_opls(
                         output_fname=data_fname,
-                        lbcc_charges=self._force_field.endswith('opls-lbcc'))
+                        lbcc_charges=self._force_field.endswith('lbcc'))
                 else:
                     amor.get_gaff2(
                         output_fname=data_fname,
@@ -253,29 +259,24 @@ class PSP(Builder):
             )
         finally:
             if cleanup:
-                force_field_dname = [
-                    'ligpargen'
-                ] if self._is_opls_force_field else ['pysimm']
-                dnames = ['molecules', 'packmol'] + force_field_dname
+                force_field_dname = 'ligpargen' if self._is_opls_force_field(
+                ) else 'pysimm'
+                dnames = ['chain_models', 'packmol'].append(force_field_dname)
                 for dir in dnames:
-                    try:
-                        shutil.rmtree(os.path.join(output_dir, dir))
-                    except FileNotFoundError:
-                        pass
+                    dir_path = os.path.join(output_dir, dir)
+                    if os.path.isdir(dir_path):
+                        shutil.rmtree(dir_path)
 
                 fnames = ['amor_model.data', 'amor_model.vasp']
                 for file in fnames:
-                    try:
-                        os.remove(os.path.join(output_dir, file))
-                    except FileNotFoundError:
-                        pass
+                    file_path = os.path.join(output_dir, file)
+                    if os.path.isfile(file_path):
+                        os.remove(file_path)
 
                 fnames = ['output_MB.csv', 'molecules.csv']
                 for file in fnames:
-                    try:
+                    if os.path.isfile(file):
                         os.remove(file)
-                    except FileNotFoundError:
-                        pass
 
     def write_data(self, output_dir: str, smiles: str, density: float,
                    natoms_total: int, length: int, nchains: int,
@@ -285,29 +286,27 @@ class PSP(Builder):
         input_data = {
             'ID': ['Poly'],
             'smiles': [smiles],
-            'Len': [length],
+            'Tunits': [length],
             'Num': [nchains],
-            'NumConf': [1],
             'Loop': [False],
-            'LeftCap': ['[*][H]'],
-            'RightCap': ['[*][H]']
+            'LeftCap': ['[*]C'],
+            'RightCap': ['[*]C']
         }
         self._run_psp(input_data, density, data_fname, output_dir, cleanup)
 
     def write_solvent_data(self, output_dir, smiles, solvent_smiles, density,
                            natoms_total, length, nsolvents, nchains,
-                           data_fname, cleanup):
+                           data_fname, cleanup) -> None:
 
         smiles = self._add_brackets_to_asterisks(smiles)
         input_data = {
             'ID': ['Sol', 'Poly'],
             'smiles': [solvent_smiles, smiles],
-            'Len': [1, length],
+            'Tunits': [1, length],
             'Num': [nsolvents, nchains],
-            'NumConf': [1, 1],
             'Loop': [False, False],
-            'LeftCap': [np.nan, '[*][H]'],
-            'RightCap': [np.nan, '[*][H]']
+            'LeftCap': [np.nan, '[*]C'],
+            'RightCap': [np.nan, '[*]C']
         }
         self._run_psp(input_data, density, data_fname, output_dir, cleanup)
 
