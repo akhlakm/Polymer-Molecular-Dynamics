@@ -7,8 +7,9 @@ pmd.System:
       force_field: pcff
   natoms_per_chain: 100
   data_fname: data.lmps
-  length: 6
-  nchains: 5
+  final_ru_per_chain: 6
+  final_nchains_total: 5
+  final_natoms_total: 520
 pmd.Lammps:
   read_data_from: data.lmps
   get_functional_form_from:

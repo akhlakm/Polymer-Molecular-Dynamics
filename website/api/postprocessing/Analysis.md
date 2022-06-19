@@ -27,6 +27,30 @@ result file obtained from TgMeasurement Procedure
 
 - `Tg` _float_ - Glass transition temperature of the system
 
+### calculate\_diffusivity
+
+```python
+def calculate_diffusivity(result_folder: str = 'result',
+                          block_list: Optional[List[int]] = None,
+                          time_array: Optional[List[int]] = None)
+```
+
+Method to calculate diffusivity based on the files in the
+result folder obtained from MSDMeasurement Procedure
+
+**Arguments**:
+
+- `result_folder` _str_ - Name of the result folder from MSDMeasurement
+  Procedure
+- `block_list` _list_ - A list of number of blocks to use
+- `time_array` _list_ - A list of time as the start and end points of
+  fitting region
+  
+
+**Returns**:
+
+- `D` _float_ - Diffusivity of the system
+
 ### calculate\_MSD
 
 ```python
