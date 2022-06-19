@@ -163,10 +163,8 @@ class EMC(Builder):
                 for ext in EMC_EXTS:
                     fnames.append(f'{tmp_file_prefilx}.{ext}')
                 for fname in fnames:
-                    try:
+                    if os.path.isfile(fname):
                         os.remove(fname)
-                    except Exception:
-                        pass
 
             os.chdir(previous_dir)
 
@@ -265,24 +263,20 @@ class PSP(Builder):
                 ) else 'pysimm'
                 dnames = ['chain_models', 'packmol'].append(force_field_dname)
                 for dir in dnames:
-                    try:
-                        shutil.rmtree(os.path.join(output_dir, dir))
-                    except FileNotFoundError:
-                        pass
+                    dir_path = os.path.join(output_dir, dir)
+                    if os.path.isdir(dir_path):
+                        shutil.rmtree(dir_path)
 
                 fnames = ['amor_model.data', 'amor_model.vasp']
                 for file in fnames:
-                    try:
-                        os.remove(os.path.join(output_dir, file))
-                    except FileNotFoundError:
-                        pass
+                    file_path = os.path.join(output_dir, file)
+                    if os.path.isfile(file_path):
+                        os.remove(file_path)
 
                 fnames = ['output_MB.csv', 'molecules.csv']
                 for file in fnames:
-                    try:
+                    if os.path.isfile(file):
                         os.remove(file)
-                    except FileNotFoundError:
-                        pass
 
     def write_data(self, output_dir: str, smiles: str, density: float,
                    natoms_total: int, length: int, nchains: int,
