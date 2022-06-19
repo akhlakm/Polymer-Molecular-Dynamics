@@ -17,25 +17,35 @@ Template object to contain System initialization settings
   
 - `density` _float_ - Density of the system
   
-- `natoms_total` _int_ - Total number of atoms of the system
-  
 - `builder` _Builder_ - Builder (One of `EMC` or `PSP`)
+  
+- `natoms_total` _int_ - Total number of atoms in the system, one of
+  this attribute and `nchains_total` has to be
+  provided but not both (providing both will result
+  in an error); default: `None`
+  
+- `nchains_total` _int_ - Total number of polymer chains in the system, one
+  of this attribute and `natoms_total` has to be
+  provided but not both (providing both will result
+  in an error); default: `None`
   
 - `natoms_per_chain` _int_ - Number of atoms per polymer chain, one of this
   attribute, `mw_per_chain`, and `ru_per_chain`
-  has to be provided but not both (providing both
-  will result in an error); default: `None`
+  has to be provided but not more than 1
+  (providing more than 1 will result in an
+  error); default: `None`
   
 - `mw_per_chain` _int_ - Molecular weight of the polymer, one of this
   attribute, `natoms_per_chain`, and `ru_per_chain`
-  has to be provided but not both (providing both
-  will result in an error); default: `None`
+  has to be provided but not more than 1
+  (providing more than 1 will result in an
+  error); default: `None`
   
 - `ru_per_chain` _int_ - Number of repeating unit per polymer chain, one of
   this attribute, `natoms_per_chain`, and
-  `mw_per_chain` has to be provided but not both
-  (providing both will result in an error); default:
-  `None`
+  `mw_per_chain` has to be provided but not more
+  than 1 (providing more than 1 will result in an
+  error); default: `None`
   
 - `data_fname` _str_ - File name of the output data file, which will be
   read in by LAMMPS
@@ -84,25 +94,35 @@ Template object to contain System with solvents initialization settings
   
 - `density` _float_ - Density of the system
   
-- `natoms_total` _int_ - Total number of atoms of the system
-  
 - `builder` _Builder_ - Builder (One of `EMC` or `PSP`)
+  
+- `natoms_total` _int_ - Total number of atoms in the system, one of
+  this attribute and `nchains_total` has to be
+  provided but not both (providing both will result
+  in an error); default: `None`
+  
+- `nchains_total` _int_ - Total number of polymer chains in the system, one
+  of this attribute and `natoms_total` has to be
+  provided but not both (providing both will result
+  in an error); default: `None`
   
 - `natoms_per_chain` _int_ - Number of atoms per polymer chain, one of this
   attribute, `mw_per_chain`, and `ru_per_chain`
-  has to be provided but not both (providing both
-  will result in an error); default: `None`
+  has to be provided but not more than 1
+  (providing more than 1 will result in an
+  error); default: `None`
   
 - `mw_per_chain` _int_ - Molecular weight of the polymer, one of this
   attribute, `natoms_per_chain`, and `ru_per_chain`
-  has to be provided but not both (providing both
-  will result in an error); default: `None`
+  has to be provided but not more than 1
+  (providing more than 1 will result in an
+  error); default: `None`
   
 - `ru_per_chain` _int_ - Number of repeating unit per polymer chain, one of
   this attribute, `natoms_per_chain`, and
-  `mw_per_chain` has to be provided but not both
-  (providing both will result in an error); default:
-  `None`
+  `mw_per_chain` has to be provided but not more
+  than 1 (providing more than 1 will result in an
+  error); default: `None`
   
 - `data_fname` _str_ - File name of the output data file, which will be
   read in by LAMMPS

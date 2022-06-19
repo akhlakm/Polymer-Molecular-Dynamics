@@ -45,7 +45,7 @@ def main() -> None:
     questions = [
         inquirer.List(
             'system',
-            message="What system do you need?",
+            message='What kind of system do you need?',
             choices=[
                 '1. System (amorphous homopolymer)',
                 '2. SolventSystem (homopolymer + solvent)',
@@ -54,7 +54,7 @@ def main() -> None:
         ),
         inquirer.List(
             'system_size',
-            message="How do you want to determine system size?",
+            message='How would you determine the system size?',
             choices=[
                 '1. By total number of atoms',
                 '2. By total number of polymer chains'
@@ -62,7 +62,7 @@ def main() -> None:
         ),
         inquirer.List(
             'chain_length',
-            message="How do you want to determine polymer chain length?",
+            message='How would you determine the polymer chain length?',
             choices=[
                 '1. By number of atoms per chain',
                 '2. By number of repeating units per chain',
@@ -71,8 +71,7 @@ def main() -> None:
         ),
         inquirer.List(
             'builder',
-            message=
-            "What force field (Builder) do you want to use for this system?",
+            message='What force field (Builder) do you want to use?',
             choices=[
                 '1. opls-lbcc (PSP)', '2. opls-cm1a (PSP)',
                 '3. gaff2-gasteiger (PSP)', '4. gaff2-am1bcc (PSP)',
@@ -82,7 +81,7 @@ def main() -> None:
         ),
         inquirer.List(
             'lammps',
-            message="What property do you want to compute?",
+            message='What property do you want to compute?',
             choices=[
                 '1. Glass transition temperature',
                 '2. Gas/solvent diffusivity', '3. Viscosity',
@@ -91,7 +90,7 @@ def main() -> None:
         ),
         inquirer.List(
             'job',
-            message="What job scheduling system do you use?",
+            message='What job scheduling system do you use?',
             choices=['1. Torque', '2. Slurm', '3. N/A (run locally)'],
         ),
         inquirer.Text('file_name',
@@ -179,8 +178,8 @@ def create_script(file_name: str, system: str, system_size: str,
             if i == 0:
                 f.write(f'{indent}{indent}pmd.{lammps}({v},\n')
             # special case to change the MSDMeasurement group dynamically
-            elif i == 1 and lammps == 'MSDMeasurement' \
-                and system != 'SolventSystem':
+            elif i == 1 and lammps == 'MSDMeasurement'and system != \
+            'SolventSystem':
                 f.write(f'{lammps_indent}group=\'type 1\', '
                         '# change the atom group to track\n')
             elif i == len(LAMMPS_FIELDS[lammps]) - 1:
