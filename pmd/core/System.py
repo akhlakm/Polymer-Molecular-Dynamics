@@ -32,7 +32,7 @@ class System:
         natoms_per_chain (int): Number of atoms per polymer chain, one of this
                                 attribute, `mw_per_chain`, and `ru_per_chain`
                                 has to be provided but not more than 1
-                                (providing more than 1 will result in an 
+                                (providing more than 1 will result in an
                                 error); default: `None`
 
         mw_per_chain (int): Molecular weight of the polymer, one of this
@@ -188,7 +188,7 @@ class SolventSystem(System):
         natoms_per_chain (int): Number of atoms per polymer chain, one of this
                                 attribute, `mw_per_chain`, and `ru_per_chain`
                                 has to be provided but not more than 1
-                                (providing more than 1 will result in an 
+                                (providing more than 1 will result in an
                                 error); default: `None`
 
         mw_per_chain (int): Molecular weight of the polymer, one of this

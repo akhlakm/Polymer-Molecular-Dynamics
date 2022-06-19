@@ -1,8 +1,8 @@
 from typing import Dict, Tuple
 
-from pmd.util.Log import Pmdlogging
-
 import inquirer
+
+from pmd.util.Log import Pmdlogging
 
 SYSTEM_OPTIONS = ('System', 'SolventSystem', 'GasSystem')
 SYSTEM_SIZE_OPTIONS = ('natoms_total=10000', 'nchains_total=50')
