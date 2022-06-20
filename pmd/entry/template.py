@@ -8,12 +8,13 @@ SYSTEM_OPTIONS = ('System', 'SolventSystem', 'GasSystem')
 SYSTEM_SIZE_OPTIONS = ('natoms_total=10000', 'nchains_total=50')
 CHAIN_LENGTH_OPTIONS = ('natoms_per_chain=150', 'ru_per_chain=25',
                         'mw_per_chain=1000')
-BUILDER_OPTIONS = ('PSP(force_field=\'opls-lbcc\'',
-                   'PSP(force_field=\'opls-cm1a\'',
-                   'PSP(force_field=\'gaff2-gasteiger\'',
-                   'PSP(force_field=\'gaff2-am1bcc\'',
-                   'EMC(force_field=\'pcff\'', 'EMC(force_field=\'opls-aa\'',
-                   'EMC(force_field=\'opls-ua\'', 'EMC(force_field=\'trappe\'')
+BUILDER_OPTIONS = ('PSP(force_field=\'opls-lbcc\')',
+                   'PSP(force_field=\'opls-cm1a\')',
+                   'PSP(force_field=\'gaff2-gasteiger\')',
+                   'PSP(force_field=\'gaff2-am1bcc\')',
+                   'EMC(force_field=\'pcff\'', 'EMC(force_field=\'opls-aa\')',
+                   'EMC(force_field=\'opls-ua\'',
+                   'EMC(force_field=\'trappe\')')
 JOB_OPTIONS = ('Torque', 'Slurm', None)
 
 LAMMPS_FIELDS = {
@@ -134,7 +135,6 @@ def create_script(file_name: str, system: str, system_size: str,
                   job: Optional[str]) -> None:
     # indents
     indent = ' ' * 4
-    system_indent = ' ' * len(f'{indent}system = pmd.{system}(')
     lammps_indent = ' ' * len(f'{indent}{indent}pmd.{lammps}(')
     job_indent = ' ' * len(f'{indent}job = pmd.{job}(')
 
@@ -151,28 +151,26 @@ def create_script(file_name: str, system: str, system_size: str,
 
         # write the System section
         f.write(f'{indent}# Define the system\n')
+        f.write(f'{indent}system = pmd.{system}(\n')
+        f.write(f'{indent}{indent}smiles=\'*CC*\',  '
+                '# change to polymer SMILES of your interest\n')
         if system == 'SolventSystem':
-            f.write(f'{indent}system = pmd.{system}(smiles=\'*CC*\', '
-                    '# your polymer SMILES\n')
-            f.write(f'{system_indent}solvent_smiles=\'CCO\', '
-                    '# your solvent SMILES\n')
-            f.write(f'{system_indent}ru_nsolvent_ratio=\'0.1\',\n')
-        else:
-            f.write(f'{indent}system = pmd.{system}(smiles=\'*CC*\', '
-                    '# change to your SMILES of interest\n')
-        f.write(f'{system_indent}density=0.8,\n')
-        f.write(f'{system_indent}{system_size},\n')
-        f.write(f'{system_indent}{chain_length},\n')
-        f.write(f'{system_indent}builder=pmd.{builder}))\n')
+            f.write(f'{indent}{indent}solvent_smiles=\'CCO\',  '
+                    '# change to your solvent SMILES\n')
+            f.write(f'{indent}{indent}ru_nsolvent_ratio=\'0.1\',\n')
+        f.write(f'{indent}{indent}density=0.8,\n')
+        f.write(f'{indent}{indent}{system_size},\n')
+        f.write(f'{indent}{indent}{chain_length},\n')
+        f.write(f'{indent}{indent}builder=pmd.{builder})\n')
         f.write('\n')
 
         # write the Lammps section
         f.write(f'{indent}# Define LAMMPS simulation procedures\n')
         f.write(f'{indent}lmp = pmd.Lammps(read_data_from=system)\n')
-        f.write(f'{indent}lmp.add_procedure(pmd.Minimization()) '
+        f.write(f'{indent}lmp.add_procedure(pmd.Minimization())  '
                 '# avoid atom overlap\n')
         f.write(f'{indent}lmp.add_procedure(pmd.Equilibration(Teq={Teq}, '
-                f'Tmax={Tmax})) # 21-step equil.\n')
+                f'Tmax={Tmax}))  # 21-step equil.\n')
         f.write(f'{indent}lmp.add_procedure(\n')
         for i, v in enumerate(LAMMPS_FIELDS[lammps]):
             if i == 0:
