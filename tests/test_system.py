@@ -59,21 +59,20 @@ def test_system_exceptions(test_data):
     with pytest.raises(ImportError):
         syst = test_data['system']
         syst.write_data()
-    
+
     # Invalid builder provided
     with pytest.raises(ValueError):
         syst.builder = 'pcff'
 
     # EMC not available for SolventSystem
     with pytest.raises(ValueError):
-        solventsyst = SolventSystem(
-            smiles='*CC*',
-            solvent_smiles='C1CCCCC1',
-            ru_nsolvent_ratio=0.1,
-            builder=EMC('pcff'),
-            density=0.8,
-            natoms_total=5000,
-            natoms_per_chain=150)
+        solventsyst = SolventSystem(smiles='*CC*',
+                                    solvent_smiles='C1CCCCC1',
+                                    ru_nsolvent_ratio=0.1,
+                                    builder=EMC('pcff'),
+                                    density=0.8,
+                                    natoms_total=5000,
+                                    natoms_per_chain=150)
 
     # No system size option provided
     with pytest.raises(ValueError):
@@ -89,6 +88,7 @@ def test_system_exceptions(test_data):
                         density=0.5,
                         natoms_per_chain=100,
                         mw_per_chain=1000),
+
 
 @pytest.mark.parametrize(
     'system',
