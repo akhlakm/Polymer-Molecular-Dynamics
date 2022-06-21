@@ -25,7 +25,7 @@ timestep        1
 
 ### Minimization
 min_style       cg
-minimize        1e-06 1e-08 100000 10000000
+minimize        1e-08 1e-10 10000000 1000000000
 
 
 ### Equilibration

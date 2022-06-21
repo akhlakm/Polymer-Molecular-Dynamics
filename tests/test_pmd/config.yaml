@@ -25,10 +25,10 @@ pmd.Lammps:
   procedures:
   - pmd.Minimization:
       min_style: cg
-      etol: 1.0e-06
-      ftol: 1.0e-08
-      maxiter: 100000
-      maxeval: 10000000
+      etol: 1.0e-08
+      ftol: 1.0e-10
+      maxiter: 10000000
+      maxeval: 1000000000
   - pmd.Equilibration:
       Teq: 300
       Peq: 1
