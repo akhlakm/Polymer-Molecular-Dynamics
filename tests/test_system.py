@@ -15,7 +15,7 @@ def test_data():
 
     solventsyst = SolventSystem(smiles='*CC*',
                                 solvent_smiles='C1CCCCC1',
-                                ru_nsolvent_ratio=0.098469007,
+                                ru_nsolvent_ratio=0.1,
                                 builder=test_builder,
                                 density=0.8,
                                 natoms_total=5000,
@@ -54,13 +54,81 @@ def test_solventsystem_update(test_data):
     assert solv_syst.smiles == '*CC(*)CC'
 
 
-def test_system_write_data(tmp_path, test_data):
+def test_system_exceptions(test_data):
     # PSP not installed
-    syst = test_data['system']
     with pytest.raises(ImportError):
+        syst = test_data['system']
         syst.write_data()
 
-    d = tmp_path / "result"
-    syst.builder = EMC('pcff')
-    syst.write_data(d)
+    # Invalid builder provided
+    with pytest.raises(ValueError):
+        syst.builder = 'pcff'
+
+    # EMC not available for SolventSystem
+    with pytest.raises(ValueError):
+        solventsyst = SolventSystem(smiles='*CC*',
+                                    solvent_smiles='C1CCCCC1',
+                                    ru_nsolvent_ratio=0.1,
+                                    builder=EMC('pcff'),
+                                    density=0.8,
+                                    natoms_total=5000,
+                                    natoms_per_chain=150)
+        solventsyst.write_data()
+
+    # No system size option provided
+    with pytest.raises(ValueError):
+        system = System('*CC*',
+                        builder=EMC('pcff'),
+                        density=0.5,
+                        natoms_per_chain=100)
+        system.write_data()
+
+    # 2 chain length options simultaneously provided
+    with pytest.raises(ValueError):
+        system = System('*CC*',
+                        builder=EMC('pcff'),
+                        density=0.5,
+                        natoms_per_chain=100,
+                        mw_per_chain=1000)
+        system.write_data()
+
+
+@pytest.mark.parametrize(
+    'system',
+    [
+        System('*CC*',
+               builder=EMC('pcff'),
+               density=0.5,
+               natoms_total=500,
+               natoms_per_chain=100),
+        System('*CC*',
+               builder=EMC('pcff'),
+               density=0.5,
+               nchains_total=5,
+               ru_per_chain=5),
+        System('*CC*',
+               builder=EMC('pcff'),
+               density=0.5,
+               natoms_total=500,
+               mw_per_chain=500),
+        System('*CC*',
+               builder=EMC('opls-aa'),
+               density=0.5,
+               natoms_total=500,
+               natoms_per_chain=100),
+        System('*CC*',
+               builder=EMC('opls-aa'),
+               density=0.5,
+               nchains_total=5,
+               ru_per_chain=5),
+        System('*CC*',
+               builder=EMC('opls-aa'),
+               density=0.5,
+               natoms_total=500,
+               mw_per_chain=500),
+    ],
+)
+def test_system_emc_write_data(tmp_path, system):
+    d = tmp_path / 'result'
+    system.write_data(d)
     assert len(list(tmp_path.iterdir())) == 1
