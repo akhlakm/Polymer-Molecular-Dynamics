@@ -55,22 +55,22 @@ class Minimization(Procedure):
                          options; default: `"cg"`
 
         etol (float): Stopping tolerance for energy (unitless); default:
-                      `10**(-6)`
-
-        ftol (float): Stopping tolerance for force (force units); default:
                       `10**(-8)`
 
-        maxiter (int): Max iterations of minimizer; default: `10**5`
+        ftol (float): Stopping tolerance for force (force units); default:
+                      `10**(-10)`
 
-        maxeval (int): Max number of force/energy evaluations; default: `10**7`
+        maxiter (int): Max iterations of minimizer; default: `10**7`
+
+        maxeval (int): Max number of force/energy evaluations; default: `10**9`
     '''
 
     def __init__(self,
                  min_style: str = 'cg',
-                 etol: float = 10**(-6),
-                 ftol: float = 10**(-8),
-                 maxiter: int = 10**5,
-                 maxeval: int = 10**7):
+                 etol: float = 10**(-8),
+                 ftol: float = 10**(-10),
+                 maxiter: int = 10**7,
+                 maxeval: int = 10**9):
         self._min_style = min_style
         self._etol = etol
         self._ftol = ftol
