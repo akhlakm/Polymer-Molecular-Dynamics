@@ -12,8 +12,8 @@ BUILDER_OPTIONS = ('PSP(force_field=\'opls-lbcc\')',
                    'PSP(force_field=\'opls-cm1a\')',
                    'PSP(force_field=\'gaff2-gasteiger\')',
                    'PSP(force_field=\'gaff2-am1bcc\')',
-                   'EMC(force_field=\'pcff\'', 'EMC(force_field=\'opls-aa\')',
-                   'EMC(force_field=\'opls-ua\'',
+                   'EMC(force_field=\'pcff\')', 'EMC(force_field=\'opls-aa\')',
+                   'EMC(force_field=\'opls-ua\')',
                    'EMC(force_field=\'trappe\')')
 JOB_OPTIONS = ('Torque', 'Slurm', None)
 
