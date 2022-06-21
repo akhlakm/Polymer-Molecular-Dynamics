@@ -66,10 +66,6 @@ class System:
                  ru_per_chain: Optional[int] = None,
                  data_fname: str = 'data.lmps'):
 
-        if not isinstance(builder, Builder):
-            raise ValueError('Invalid builder value, please provide '
-                             'either a EMC or PSP object')
-
         self._smiles = smiles
         self._density = density
         self._natoms_total = natoms_total
@@ -84,7 +80,8 @@ class System:
         validate_options(self, SYSTEM_SIZE_OPTIONS)
         # Make sure only 1 chain length option is given
         validate_options(self, CHAIN_LENGTH_OPTIONS)
-
+        # Make sure the provided builder is correct
+        self._validate_builder()
         # Calculate system specs such as chain length, # of polymers
         self._calculate_system_spec()
 
@@ -111,8 +108,14 @@ class System:
     @builder.setter
     def builder(self, builder: str):
         self._builder = builder
+        self._validate_builder()
 
-    def _calculate_system_spec(self):
+    def _validate_builder(self) -> None:
+        if not isinstance(self._builder, Builder):
+            raise ValueError('Invalid builder value, please provide '
+                             'either a EMC or PSP object')
+
+    def _calculate_system_spec(self) -> None:
         mol = Chem.MolFromSmiles(self._smiles)
         natoms_per_RU = mol.GetNumAtoms(onlyExplicit=0) - 2
         if self._natoms_per_chain:
@@ -236,10 +239,6 @@ class SolventSystem(System):
         self._solvent_smiles = solvent_smiles
         self._ru_nsolvent_ratio = ru_nsolvent_ratio
 
-        if not isinstance(builder, PSP):
-            raise ValueError('SolventSystem currently only accepts '
-                             'PSP builder')
-
         super().__init__(smiles,
                          density,
                          builder,
@@ -254,7 +253,12 @@ class SolventSystem(System):
     def solvent_group(self):
         return f'molecule <= {self._nsolvents}'
 
-    def _calculate_system_spec(self):
+    def _validate_builder(self) -> None:
+        if not isinstance(self._builder, PSP):
+            raise ValueError('SolventSystem currently only accepts '
+                             'PSP builder')
+
+    def _calculate_system_spec(self) -> None:
         # Get the number of atoms of a repeating unit and determine the polymer
         # chain length
         mol = Chem.MolFromSmiles(self._smiles)

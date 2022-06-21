@@ -6,7 +6,7 @@ from pmd.core import (EMC, NPT, NVT, PSP, Equilibration, Lammps, Minimization,
 
 
 @pytest.mark.parametrize(
-    "procedures, builder, lmp_input_fname",
+    'procedures, builder, lmp_input_fname',
     [
         (Minimization(), PSP('gaff2-gasteiger'), 'lmp_Minimization.in'),
         ([Minimization()], PSP('gaff2-gasteiger'), 'lmp_Minimization.in'),
@@ -57,7 +57,7 @@ from pmd.core import (EMC, NPT, NVT, PSP, Equilibration, Lammps, Minimization,
 )
 def test_lammps_write(data_path, tmp_path, procedures, builder,
                       lmp_input_fname):
-    d = tmp_path / "result"
+    d = tmp_path / 'result'
     expected_output = data_path / lmp_input_fname
     actual_output = d / lmp_input_fname
 
