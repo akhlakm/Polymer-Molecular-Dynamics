@@ -73,13 +73,15 @@ def test_system_exceptions(test_data):
                                     density=0.8,
                                     natoms_total=5000,
                                     natoms_per_chain=150)
+        solventsyst.write_data()
 
     # No system size option provided
     with pytest.raises(ValueError):
         system = System('*CC*',
                         builder=EMC('pcff'),
                         density=0.5,
-                        natoms_per_chain=100),
+                        natoms_per_chain=100)
+        system.write_data()
 
     # 2 chain length options simultaneously provided
     with pytest.raises(ValueError):
@@ -87,7 +89,8 @@ def test_system_exceptions(test_data):
                         builder=EMC('pcff'),
                         density=0.5,
                         natoms_per_chain=100,
-                        mw_per_chain=1000),
+                        mw_per_chain=1000)
+        system.write_data()
 
 
 @pytest.mark.parametrize(
