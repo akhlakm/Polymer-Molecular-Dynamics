@@ -1,6 +1,7 @@
 from typing import Optional
 
 from rdkit import Chem
+from rdkit.Chem import Descriptors
 
 from pmd.core.Builder import PSP, Builder
 from pmd.util import Pmdlogging, validate_options
@@ -118,7 +119,7 @@ class System:
             self._final_ru_per_chain = round(self._natoms_per_chain /
                                              natoms_per_RU)
         elif self._mw_per_chain:
-            mw_per_RU = Chem.Descriptors.ExactMolWt(mol)
+            mw_per_RU = Descriptors.ExactMolWt(mol)
             self._final_ru_per_chain = round(self._mw_per_chain / mw_per_RU)
         else:
             self._final_ru_per_chain = self._ru_per_chain
@@ -262,7 +263,7 @@ class SolventSystem(System):
             self._final_ru_per_chain = round(self._natoms_per_chain /
                                              natoms_per_RU)
         elif self._mw_per_chain:
-            mw_per_ru = Chem.Descriptors.ExactMolWt(mol)
+            mw_per_ru = Descriptors.ExactMolWt(mol)
             self._final_ru_per_chain = round(self._mw_per_chain / mw_per_ru)
         else:
             self._final_ru_per_chain = self._ru_per_chain
