@@ -32,7 +32,7 @@ class Pmdlogging():
             None
     '''
 
-    LOGGER = logging.getLogger()
+    LOGGER = logging.getLogger(__name__)
     handler = logging.StreamHandler()
     handler.setFormatter(CustomFormatter())
 
