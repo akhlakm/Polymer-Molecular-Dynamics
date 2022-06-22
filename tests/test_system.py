@@ -64,17 +64,6 @@ def test_system_exceptions(test_data):
     with pytest.raises(ValueError):
         syst.builder = 'pcff'
 
-    # EMC not available for SolventSystem
-    with pytest.raises(ValueError):
-        solventsyst = SolventSystem(smiles='*CC*',
-                                    solvent_smiles='C1CCCCC1',
-                                    ru_nsolvent_ratio=0.1,
-                                    builder=EMC('pcff'),
-                                    density=0.8,
-                                    natoms_total=5000,
-                                    natoms_per_chain=150)
-        solventsyst.write_data()
-
     # No system size option provided
     with pytest.raises(ValueError):
         system = System('*CC*',
@@ -126,6 +115,48 @@ def test_system_exceptions(test_data):
                density=0.5,
                natoms_total=500,
                mw_per_chain=500),
+        SolventSystem(smiles='*CC*',
+                      solvent_smiles='C1CCCCC1',
+                      ru_nsolvent_ratio=0.1,
+                      builder=EMC('pcff'),
+                      density=0.5,
+                      natoms_total=500,
+                      natoms_per_chain=100),
+        SolventSystem(smiles='*CC*',
+                      solvent_smiles='C1CCCCC1',
+                      ru_nsolvent_ratio=0.1,
+                      builder=EMC('pcff'),
+                      density=0.5,
+                      nchains_total=5,
+                      ru_per_chain=5),
+        SolventSystem(smiles='*CC*',
+                      solvent_smiles='C1CCCCC1',
+                      ru_nsolvent_ratio=0.1,
+                      builder=EMC('pcff'),
+                      density=0.5,
+                      natoms_total=500,
+                      mw_per_chain=500),
+        SolventSystem(smiles='*CC*',
+                      solvent_smiles='C1CCCCC1',
+                      ru_nsolvent_ratio=0.1,
+                      builder=EMC('opls-aa'),
+                      density=0.5,
+                      natoms_total=500,
+                      natoms_per_chain=100),
+        SolventSystem(smiles='*CC*',
+                      solvent_smiles='C1CCCCC1',
+                      ru_nsolvent_ratio=0.1,
+                      builder=EMC('opls-aa'),
+                      density=0.5,
+                      nchains_total=5,
+                      ru_per_chain=5),
+        SolventSystem(smiles='*CC*',
+                      solvent_smiles='C1CCCCC1',
+                      ru_nsolvent_ratio=0.1,
+                      builder=EMC('opls-aa'),
+                      density=0.5,
+                      natoms_total=500,
+                      mw_per_chain=500),
     ],
 )
 def test_system_emc_write_data(tmp_path, system):

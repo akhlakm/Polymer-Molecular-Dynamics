@@ -3,7 +3,7 @@ from typing import Optional
 from rdkit import Chem
 from rdkit.Chem import Descriptors
 
-from pmd.core.Builder import PSP, Builder
+from pmd.core.Builder import Builder
 from pmd.util import Pmdlogging, validate_options
 
 SYSTEM_SIZE_OPTIONS = ('natoms_total', 'nchains_total')
@@ -252,11 +252,6 @@ class SolventSystem(System):
     @property
     def solvent_group(self):
         return f'molecule <= {self._nsolvents}'
-
-    def _validate_builder(self) -> None:
-        if not isinstance(self._builder, PSP):
-            raise ValueError('SolventSystem currently only accepts '
-                             'PSP builder')
 
     def _calculate_system_spec(self) -> None:
         # Get the number of atoms of a repeating unit and determine the polymer
