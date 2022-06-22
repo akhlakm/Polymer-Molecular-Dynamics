@@ -37,7 +37,7 @@ if __name__ == '__main__':
                                density=0.8,
                                natoms_total=5000,
                                natoms_per_chain=150,
-                               builder=pmd.PSP(force_field='gaff2-am1bcc'))
+                               builder=pmd.EMC(force_field='pcff'))
 
     lmp = pmd.Lammps(read_data_from=system)
     lmp.add_procedure(pmd.Minimization())

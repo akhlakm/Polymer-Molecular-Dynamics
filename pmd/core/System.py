@@ -253,11 +253,6 @@ class SolventSystem(System):
     def solvent_group(self):
         return f'molecule <= {self._nsolvents}'
 
-    def _validate_builder(self) -> None:
-        if not isinstance(self._builder, PSP):
-            raise ValueError('SolventSystem currently only accepts '
-                             'PSP builder')
-
     def _calculate_system_spec(self) -> None:
         # Get the number of atoms of a repeating unit and determine the polymer
         # chain length
