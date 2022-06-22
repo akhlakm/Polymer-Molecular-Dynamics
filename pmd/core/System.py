@@ -3,7 +3,7 @@ from typing import Optional
 from rdkit import Chem
 from rdkit.Chem import Descriptors
 
-from pmd.core.Builder import PSP, Builder
+from pmd.core.Builder import Builder
 from pmd.util import Pmdlogging, validate_options
 
 SYSTEM_SIZE_OPTIONS = ('natoms_total', 'nchains_total')
