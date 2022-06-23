@@ -2,7 +2,7 @@ import pytest
 
 from pmd.core import (EMC, NPT, NVT, PSP, Equilibration, Lammps, Minimization,
                       MSDMeasurement, ShearDeformation, TensileDeformation,
-                      TgMeasurement)
+                      TgMeasurement, HeatFluxMeasurement)
 
 
 @pytest.mark.parametrize(
@@ -53,6 +53,14 @@ from pmd.core import (EMC, NPT, NVT, PSP, Equilibration, Lammps, Minimization,
             NPT(Tinit=300, Tfinal=300, Pinit=1, Pfinal=1, duration=10**7),
             NVT(Tinit=300, Tfinal=300, duration=10**8)
         ], PSP('gaff2-gasteiger'), 'lmp_NPT_NVT.in'),
+        ([
+            Minimization(),
+            Equilibration(Teq=300, Peq=1, Tmax=800, Pmax=49346.163),
+            HeatFluxMeasurement(duration=10**7,
+                                T=300,
+                                dump_image=True,
+                                reset_timestep_before_run=True)
+        ], EMC('pcff'), 'lmp_HeatFluxMeasurement.in'),
     ],
 )
 def test_lammps_write(data_path, tmp_path, procedures, builder,
