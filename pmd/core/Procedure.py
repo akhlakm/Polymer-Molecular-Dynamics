@@ -611,7 +611,7 @@ class ShearDeformation(Procedure):
         Tdamp (str): Damping parameter for thermostats; default:
                      `"$(100.0*dt)"`
 
-        calculate_every (int): Calculate result every this many 
+        calculate_every (int): Calculate result every this many
                                timesteps; default: `100000`
 
         dump_fname (str): Name of the dump file; default:

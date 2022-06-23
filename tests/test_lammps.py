@@ -1,8 +1,8 @@
 import pytest
 
-from pmd.core import (EMC, NPT, NVT, PSP, Equilibration, Lammps, Minimization,
-                      MSDMeasurement, ShearDeformation, TensileDeformation,
-                      TgMeasurement, HeatFluxMeasurement)
+from pmd.core import (EMC, NPT, NVT, PSP, Equilibration, HeatFluxMeasurement,
+                      Lammps, Minimization, MSDMeasurement, ShearDeformation,
+                      TensileDeformation, TgMeasurement)
 
 
 @pytest.mark.parametrize(

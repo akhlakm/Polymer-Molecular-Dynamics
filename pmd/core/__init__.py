@@ -2,9 +2,9 @@ from .Builder import EMC, PSP
 from .Job import Slurm, Torque
 from .Lammps import Lammps
 from .Pmd import Pmd
-from .Procedure import (NPT, NVT, Equilibration, Minimization, MSDMeasurement,
-                        ShearDeformation, TensileDeformation, TgMeasurement,
-                        HeatFluxMeasurement)
+from .Procedure import (NPT, NVT, Equilibration, HeatFluxMeasurement,
+                        Minimization, MSDMeasurement, ShearDeformation,
+                        TensileDeformation, TgMeasurement)
 from .System import SolventSystem, System
 
 __all__ = [
