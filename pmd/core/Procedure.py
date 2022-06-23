@@ -611,8 +611,8 @@ class ShearDeformation(Procedure):
         Tdamp (str): Damping parameter for thermostats; default:
                      `"$(100.0*dt)"`
 
-        print_every (int): Print result to the result file every this many
-                           timesteps; default: `1000`
+        calculate_every (int): Calculate result every this many
+                               timesteps; default: `100000`
 
         dump_fname (str): Name of the dump file; default:
                           `"shear_deformation.lammpstrj"`
@@ -680,4 +680,96 @@ class ShearDeformation(Procedure):
         f.write(f'{"unfix":<15} fNVTSLLOD\n')
         f.write(f'{"unfix":<15} fDEFORM\n')
         f.write(f'{"unfix":<15} fVISC\n')
+        f.write('\n')
+
+
+class HeatFluxMeasurement(Procedure):
+    '''Perform a heat flux measurement to calculate the thermal conductivity
+    using the equilibrium Green-Kubo formalism.
+
+    Attributes:
+        duration (int): Duration of the deformation procedure (timestep unit)
+
+        T (float): Temperature
+
+        Tdamp (str): Damping parameter for thermostats; default:
+                     `"$(100.0*dt)"`
+
+        dump_fname (str): Name of the dump file; default:
+                          `"heatflux_measurement.lammpstrj"`
+
+        dump_every (int): Dump every this many timesteps; default: `10000`
+
+        dump_image (bool): Whether to dump a image file at the end of the run
+                           ; default: `False`
+
+        reset_timestep_before_run (bool): Whether to reset timestep after the
+                                          procedure; default: `False`
+
+        result_fname (str): Name of the result file; default: `"J0Jt.txt"`
+    '''
+
+    def __init__(self,
+                 duration: int,
+                 T: float,
+                 Tdamp: str = '$(100.0*dt)',
+                 result_fname: str = 'J0Jt.txt',
+                 dump_fname: str = 'heatflux_measurement.lammpstrj',
+                 dump_every: int = 10000,
+                 dump_image: bool = False,
+                 reset_timestep_before_run: bool = False):
+        self._T = T
+        self._Tdamp = Tdamp
+        self._result_fname = result_fname
+
+        super().__init__(duration, dump_fname, dump_every, dump_image,
+                         reset_timestep_before_run)
+
+    def write_lammps(self, f: TextIOWrapper):
+        f.write(f'{"variable":<15} T equal {self._T}\n')
+        f.write(f'{"variable":<15} V equal vol\n')
+        f.write(f'{"variable":<15} p equal 200\n')
+        f.write(f'{"variable":<15} s equal 10\n')
+        f.write(f'{"variable":<15} d equal $p*$s\n')
+        f.write(f'{"thermo":<15} $d\n')
+        f.write('\n')
+
+        f.write('# convert from LAMMPS real units to SI\n')
+        f.write(f'{"variable":<15} kB equal 1.3806504e-23  '
+                '# [J/K] Boltzmann\n')
+        f.write(f'{"variable":<15} kCal2J equal 4186.0/6.02214e23\n')
+        f.write(f'{"variable":<15} A2m equal 1.0e-10\n')
+        f.write(f'{"variable":<15} fs2s equal 1.0e-15\n')
+        f.write(f'{"variable":<15} convert equal '
+                '${kCal2J}*${kCal2J}/${fs2s}/${A2m}\n')
+        f.write('\n')
+
+        f.write(f'{"fix":<15} fNVT all nvt temp '
+                f'{self._T} {self._T} {self._Tdamp} drag 0.2\n')
+        f.write('\n')
+
+        f.write(f'{"compute":<15} myKE all ke/atom\n')
+        f.write(f'{"compute":<15} myPE all pe/atom\n')
+        f.write(f'{"compute":<15} myStress all stress/atom NULL virial\n')
+        f.write(f'{"compute":<15} flux all heat/flux myKE myPE myStress\n')
+        f.write(f'{"fix":<15} JJ all ave/correlate $s $p $d '
+                'c_flux[1] c_flux[2] c_flux[3] type auto file '
+                f'{self._result_fname} ave running\n')
+        f.write('\n')
+
+        f.write(f'{"variable":<15} scale equal '
+                '${convert}/${kB}/$T/$T/$V*$s\n')
+        f.write(f'{"variable":<15} '
+                'k11 equal trap(f_JJ[3])*${scale}\n')
+        f.write(f'{"variable":<15} '
+                'k22 equal trap(f_JJ[4])*${scale}\n')
+        f.write(f'{"variable":<15} '
+                'k33 equal trap(f_JJ[5])*${scale}\n')
+        f.write('\n')
+        f.write(f'{"run":<15} {self._duration}\n')
+        f.write(f'{"variable":<15} k equal (v_k11+v_k22+v_k33)/3.0\n')
+        f.write(f'{"print":<15} \"average conductivity: $k[W/mK]\"\n')
+        f.write('\n')
+        f.write(f'{"unfix":<15} fNVT\n')
+        f.write(f'{"unfix":<15} JJ\n')
         f.write('\n')
