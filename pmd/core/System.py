@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Tuple
 
 from rdkit import Chem
 from rdkit.Chem import Descriptors
@@ -47,6 +47,10 @@ class System:
                             `mw_per_chain` has to be provided but not more
                             than 1 (providing more than 1 will result in an
                             error); default: `None`
+        
+        end_cap_smiles (str): SMILES string of the end-cap unit for polymers
+                              ; default: `"*C"` (hint: put `"*[H]"` for end
+                              capping with -H)
 
         data_fname (str): File name of the output data file, which will be
                           read in by LAMMPS
@@ -64,6 +68,7 @@ class System:
                  natoms_per_chain: Optional[int] = None,
                  mw_per_chain: Optional[int] = None,
                  ru_per_chain: Optional[int] = None,
+                 end_cap_smiles: str = '*C',
                  data_fname: str = 'data.lmps'):
 
         self._smiles = smiles
@@ -74,6 +79,7 @@ class System:
         self._mw_per_chain = mw_per_chain
         self._natoms_per_chain = natoms_per_chain
         self._ru_per_chain = ru_per_chain
+        self._end_cap_smiles = end_cap_smiles
         self._data_fname = data_fname
 
         # Make sure only 1 system size option is given
@@ -93,6 +99,10 @@ class System:
         return self._smiles
 
     @property
+    def end_cap_smiles(self) -> str:
+        return self._end_cap_smiles
+
+    @property
     def data_fname(self) -> str:
         return self._data_fname
 
@@ -105,6 +115,11 @@ class System:
         self._smiles = smiles
         self._calculate_system_spec()
 
+    @end_cap_smiles.setter
+    def end_cap_smiles(self, end_cap_smiles: str):
+        self._end_cap_smiles = end_cap_smiles
+        self._calculate_system_spec()
+
     @builder.setter
     def builder(self, builder: str):
         self._builder = builder
@@ -115,7 +130,9 @@ class System:
             raise ValueError('Invalid builder value, please provide '
                              'either a EMC or PSP object')
 
-    def _calculate_system_spec(self) -> None:
+    def _calculate_polymer_spec(self) -> Tuple[int]:
+        # Get the number of atoms of a repeating unit and determine the polymer
+        # chain length
         mol = Chem.MolFromSmiles(self._smiles)
         natoms_per_RU = mol.GetNumAtoms(onlyExplicit=0) - 2
         if self._natoms_per_chain:
@@ -127,19 +144,27 @@ class System:
         else:
             self._final_ru_per_chain = self._ru_per_chain
 
+        # Get the number of atoms of a end-cap unit
+        mol_end_cap = Chem.MolFromSmiles(self._end_cap_smiles)
+        natoms_end_cap = mol_end_cap.GetNumAtoms(onlyExplicit=0) - 1
+        return natoms_per_RU, natoms_end_cap
+
+    def _calculate_system_spec(self) -> None:
+        natoms_per_RU, natoms_end_cap = self._calculate_polymer_spec()
+
+        # calculate final total number of chains
         if self._natoms_total:
-            # +8 is for end-capping with -CH3
             self._final_nchains_total = round(
                 self._natoms_total /
-                (natoms_per_RU * self._final_ru_per_chain + 8))
-            self._final_natoms_total = (
-                self._final_ru_per_chain * natoms_per_RU +
-                8) * self._final_nchains_total
+                (natoms_per_RU * self._final_ru_per_chain +
+                 natoms_end_cap * 2))
         else:
             self._final_nchains_total = self._nchains_total
-            self._final_natoms_total = (
-                self._final_ru_per_chain * natoms_per_RU +
-                8) * self._nchains_total
+
+        # calculate final total number of atoms
+        self._final_natoms_total = (
+            self._final_ru_per_chain * natoms_per_RU +
+            natoms_end_cap * 2) * self._final_nchains_total
 
         Pmdlogging.info('System stats generated\n'
                         '--------Polymer Stats--------\n'
@@ -168,7 +193,8 @@ class System:
         self._builder.write_data(output_dir, self._smiles, self._density,
                                  self._final_natoms_total,
                                  self._final_ru_per_chain,
-                                 self._final_nchains_total, self._data_fname,
+                                 self._final_nchains_total,
+                                 self._end_cap_smiles, self._data_fname,
                                  cleanup)
 
 
@@ -215,6 +241,10 @@ class SolventSystem(System):
                             `mw_per_chain` has to be provided but not more
                             than 1 (providing more than 1 will result in an
                             error); default: `None`
+        
+        end_cap_smiles (str): SMILES string of the end-cap unit for polymers
+                              ; default: `"*C"` (hint: put `"*[H]"` for end
+                              capping with -H)
 
         data_fname (str): File name of the output data file, which will be
                           read in by LAMMPS
@@ -234,6 +264,7 @@ class SolventSystem(System):
                  natoms_per_chain: Optional[int] = None,
                  mw_per_chain: Optional[int] = None,
                  ru_per_chain: Optional[int] = None,
+                 end_cap_smiles: str = '*C',
                  data_fname: str = 'data.lmps'):
 
         self._solvent_smiles = solvent_smiles
@@ -247,6 +278,7 @@ class SolventSystem(System):
                          natoms_per_chain=natoms_per_chain,
                          mw_per_chain=mw_per_chain,
                          ru_per_chain=ru_per_chain,
+                         end_cap_smiles=end_cap_smiles,
                          data_fname=data_fname)
 
     @property
@@ -254,43 +286,38 @@ class SolventSystem(System):
         return f'molecule <= {self._nsolvents}'
 
     def _calculate_system_spec(self) -> None:
-        # Get the number of atoms of a repeating unit and determine the polymer
-        # chain length
-        mol = Chem.MolFromSmiles(self._smiles)
-        natoms_per_RU = mol.GetNumAtoms(onlyExplicit=0) - 2
-        if self._natoms_per_chain:
-            self._final_ru_per_chain = round(self._natoms_per_chain /
-                                             natoms_per_RU)
-        elif self._mw_per_chain:
-            mw_per_ru = Descriptors.ExactMolWt(mol)
-            self._final_ru_per_chain = round(self._mw_per_chain / mw_per_ru)
-        else:
-            self._final_ru_per_chain = self._ru_per_chain
+        natoms_per_RU, natoms_end_cap = self._calculate_polymer_spec()
 
         # Get the number of atoms of a solvent molecule
         mol_solvent = Chem.MolFromSmiles(self._solvent_smiles)
         natoms_solvent = mol_solvent.GetNumAtoms(onlyExplicit=0)
 
         # Calculate number of polymer chains and solvents based on target total
-        # number of atoms (+8 is for end-capping with -CH3)
+        # number of atoms
         natoms_total_onechain = (
-            self._ru_nsolvent_ratio * self._final_ru_per_chain *
-            natoms_solvent) + (self._final_ru_per_chain * natoms_per_RU + 8)
+            self._ru_nsolvent_ratio * self._final_ru_per_chain * natoms_solvent
+        ) + (self._final_ru_per_chain * natoms_per_RU + natoms_end_cap * 2)
+
+        # calculate final total number of chains
         if self._natoms_total:
             self._final_nchains_total = round(self._natoms_total /
                                               natoms_total_onechain)
         else:
             self._final_nchains_total = self._nchains_total
+
+        # calculate final total number of solvents
         self._nsolvents = round(self._ru_nsolvent_ratio *
                                 self._final_ru_per_chain *
                                 self._final_nchains_total)
 
+        # calculate final total number of atoms
+        self._final_natoms_total = self._nsolvents * natoms_solvent + (
+            self._final_ru_per_chain * natoms_per_RU +
+            natoms_end_cap * 2) * self._final_nchains_total
+
         # Calculate extra stats for logging use
         final_nsol_nRU_ratio = self._nsolvents / (self._final_ru_per_chain *
                                                   self._final_nchains_total)
-        self._final_natoms_total = self._nsolvents * natoms_solvent + (
-            self._final_ru_per_chain * natoms_per_RU +
-            8) * self._final_nchains_total
 
         Pmdlogging.info(
             'System stats generated\n'
@@ -325,5 +352,5 @@ class SolventSystem(System):
         self._builder.write_solvent_data(
             output_dir, self._smiles, self._solvent_smiles, self._density,
             self._final_natoms_total, self._final_ru_per_chain,
-            self._nsolvents, self._final_nchains_total, self._data_fname,
-            cleanup)
+            self._nsolvents, self._final_nchains_total, self._end_cap_smiles,
+            self._data_fname, cleanup)

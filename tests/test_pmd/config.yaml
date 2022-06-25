@@ -6,6 +6,7 @@ pmd.System:
     pmd.EMC:
       force_field: pcff
   natoms_per_chain: 100
+  end_cap_smiles: '*C'
   data_fname: data.lmps
   final_ru_per_chain: 6
   final_nchains_total: 5
