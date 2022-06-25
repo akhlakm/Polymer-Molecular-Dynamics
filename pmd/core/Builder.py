@@ -1,5 +1,4 @@
 import os
-import re
 import shutil
 from io import TextIOWrapper
 from typing import Tuple
@@ -148,9 +147,11 @@ class EMC(Builder):
     @build_dir
     def write_data(self, output_dir: str, smiles: str, density: float,
                    natoms_total: int, length: int, nchains: int,
-                   data_fname: str, cleanup: bool) -> None:
+                   end_cap_smiles: str, data_fname: str,
+                   cleanup: bool) -> None:
 
         smiles = self._remove_brackets_around_asterisks(smiles)
+        end_cap_smiles = self._remove_brackets_around_asterisks(end_cap_smiles)
 
         tmp_file_prefilx = 'system'
         # Write .esh file required to run EMC
@@ -166,7 +167,7 @@ class EMC(Builder):
             f.write('\n')
             f.write('ITEM GROUPS\n')
             f.write(f'RU {smiles},1,RU:2\n')
-            f.write('terminator *C,1,RU:1,1,RU:2\n')
+            f.write(f'terminator {end_cap_smiles},1,RU:1,1,RU:2\n')
             f.write('ITEM END\n')
             f.write('\n')
             f.write('ITEM CLUSTERS\n')
@@ -184,10 +185,11 @@ class EMC(Builder):
     def write_solvent_data(self, output_dir: str, smiles: str,
                            solvent_smiles: str, density: float,
                            natoms_total: int, length: int, nsolvents: int,
-                           nchains: int, data_fname: str,
+                           nchains: int, end_cap_smiles: str, data_fname: str,
                            cleanup: bool) -> None:
 
         smiles = self._remove_brackets_around_asterisks(smiles)
+        end_cap_smiles = self._remove_brackets_around_asterisks(end_cap_smiles)
 
         tmp_file_prefilx = 'solventsystem'
         # Write .esh file required to run EMC
@@ -204,7 +206,7 @@ class EMC(Builder):
             f.write('ITEM GROUPS\n')
             f.write(f'solvent {solvent_smiles}\n')
             f.write(f'RU {smiles},1,RU:2\n')
-            f.write('terminator *C,1,RU:1,1,RU:2\n')
+            f.write(f'terminator {end_cap_smiles},1,RU:1,1,RU:2\n')
             f.write('ITEM END\n')
             f.write('\n')
             f.write('ITEM CLUSTERS\n')
@@ -267,9 +269,7 @@ class PSP(Builder):
 
     @staticmethod
     def _add_brackets_to_asterisks(smiles: str) -> str:
-        stars_no_bracket = re.findall(r'(?<!\[)\*(?!\])', smiles)
-        if len(stars_no_bracket) == 2:
-            smiles = smiles.replace('*', '[*]')
+        smiles = smiles.replace('*', '[*]')
         return smiles
 
     def _is_opls_force_field(self) -> bool:
@@ -331,35 +331,38 @@ class PSP(Builder):
 
     def write_data(self, output_dir: str, smiles: str, density: float,
                    natoms_total: int, length: int, nchains: int,
-                   data_fname: str, cleanup: bool) -> None:
+                   end_cap_smiles: str, data_fname: str,
+                   cleanup: bool) -> None:
 
         smiles = self._add_brackets_to_asterisks(smiles)
+        end_cap_smiles = self._add_brackets_to_asterisks(end_cap_smiles)
         input_data = {
             'ID': ['Poly'],
             'smiles': [smiles],
             'Tunits': [length],
             'Num': [nchains],
             'Loop': [False],
-            'LeftCap': ['[*]C'],
-            'RightCap': ['[*]C']
+            'LeftCap': [end_cap_smiles],
+            'RightCap': [end_cap_smiles]
         }
         self._run_psp(input_data, density, data_fname, output_dir, cleanup)
 
     def write_solvent_data(self, output_dir: str, smiles: str,
                            solvent_smiles: str, density: float,
                            natoms_total: int, length: int, nsolvents: int,
-                           nchains: int, data_fname: str,
+                           nchains: int, end_cap_smiles: str, data_fname: str,
                            cleanup: bool) -> None:
 
         smiles = self._add_brackets_to_asterisks(smiles)
+        end_cap_smiles = self._add_brackets_to_asterisks(end_cap_smiles)
         input_data = {
             'ID': ['Sol', 'Poly'],
             'smiles': [solvent_smiles, smiles],
             'Tunits': [1, length],
             'Num': [nsolvents, nchains],
             'Loop': [False, False],
-            'LeftCap': [np.nan, '[*]C'],
-            'RightCap': [np.nan, '[*]C']
+            'LeftCap': [np.nan, end_cap_smiles],
+            'RightCap': [np.nan, end_cap_smiles]
         }
         self._run_psp(input_data, density, data_fname, output_dir, cleanup)
 

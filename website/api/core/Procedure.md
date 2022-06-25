@@ -21,14 +21,14 @@ local potential energy minimum.
   options; default: `"cg"`
   
 - `etol` _float_ - Stopping tolerance for energy (unitless); default:
-  `10**(-6)`
-  
-- `ftol` _float_ - Stopping tolerance for force (force units); default:
   `10**(-8)`
   
-- `maxiter` _int_ - Max iterations of minimizer; default: `10**5`
+- `ftol` _float_ - Stopping tolerance for force (force units); default:
+  `10**(-10)`
   
-- `maxeval` _int_ - Max number of force/energy evaluations; default: `10**7`
+- `maxiter` _int_ - Max iterations of minimizer; default: `10**7`
+  
+- `maxeval` _int_ - Max number of force/energy evaluations; default: `10**9`
 
 ## Equilibration Objects
 
@@ -281,8 +281,8 @@ to calculate shear viscosity.
 - `Tdamp` _str_ - Damping parameter for thermostats; default:
   `"$(100.0*dt)"`
   
-- `print_every` _int_ - Print result to the result file every this many
-  timesteps; default: `1000`
+- `calculate_every` _int_ - Calculate result every this many
+  timesteps; default: `100000`
   
 - `dump_fname` _str_ - Name of the dump file; default:
   `"shear_deformation.lammpstrj"`
@@ -297,4 +297,35 @@ to calculate shear viscosity.
   
 - `result_fname` _str_ - Name of the result file; default:
   `"viscosity.txt"`
+
+## HeatFluxMeasurement Objects
+
+```python
+class HeatFluxMeasurement(Procedure)
+```
+
+Perform a heat flux measurement to calculate the thermal conductivity
+using the equilibrium Green-Kubo formalism.
+
+**Attributes**:
+
+- `duration` _int_ - Duration of the deformation procedure (timestep unit)
+  
+- `T` _float_ - Temperature
+  
+- `Tdamp` _str_ - Damping parameter for thermostats; default:
+  `"$(100.0*dt)"`
+  
+- `dump_fname` _str_ - Name of the dump file; default:
+  `"heatflux_measurement.lammpstrj"`
+  
+- `dump_every` _int_ - Dump every this many timesteps; default: `10000`
+  
+- `dump_image` _bool_ - Whether to dump a image file at the end of the run
+  ; default: `False`
+  
+- `reset_timestep_before_run` _bool_ - Whether to reset timestep after the
+  procedure; default: `False`
+  
+- `result_fname` _str_ - Name of the result file; default: `"J0Jt.txt"`
 

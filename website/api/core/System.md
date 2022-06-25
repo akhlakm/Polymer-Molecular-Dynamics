@@ -47,6 +47,10 @@ Template object to contain System initialization settings
   than 1 (providing more than 1 will result in an
   error); default: `None`
   
+- `end_cap_smiles` _str_ - SMILES string of the end-cap unit for polymers
+  ; default: `"*C"` (hint: put `"*[H]"` for end
+  capping with -H)
+  
 - `data_fname` _str_ - File name of the output data file, which will be
   read in by LAMMPS
   [read_data](https://docs.lammps.org/read_data.html)
@@ -123,6 +127,10 @@ Template object to contain System with solvents initialization settings
   `mw_per_chain` has to be provided but not more
   than 1 (providing more than 1 will result in an
   error); default: `None`
+  
+- `end_cap_smiles` _str_ - SMILES string of the end-cap unit for polymers
+  ; default: `"*C"` (hint: put `"*[H]"` for end
+  capping with -H)
   
 - `data_fname` _str_ - File name of the output data file, which will be
   read in by LAMMPS
