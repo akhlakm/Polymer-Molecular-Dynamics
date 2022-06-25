@@ -1,5 +1,4 @@
 import os
-import re
 import shutil
 from io import TextIOWrapper
 from typing import Tuple

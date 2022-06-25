@@ -47,7 +47,7 @@ class System:
                             `mw_per_chain` has to be provided but not more
                             than 1 (providing more than 1 will result in an
                             error); default: `None`
-        
+
         end_cap_smiles (str): SMILES string of the end-cap unit for polymers
                               ; default: `"*C"` (hint: put `"*[H]"` for end
                               capping with -H)
@@ -241,7 +241,7 @@ class SolventSystem(System):
                             `mw_per_chain` has to be provided but not more
                             than 1 (providing more than 1 will result in an
                             error); default: `None`
-        
+
         end_cap_smiles (str): SMILES string of the end-cap unit for polymers
                               ; default: `"*C"` (hint: put `"*[H]"` for end
                               capping with -H)
