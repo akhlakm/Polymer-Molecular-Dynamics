@@ -19,25 +19,25 @@ JOB_OPTIONS = ('Torque', 'Slurm', None)
 
 LAMMPS_FIELDS = {
     'TgMeasurement': [
-        'Tinit=600', 'Tfinal=100', 'Tinterval=20', 'step_duration=1000000',
-        'dump_image=True', 'reset_timestep_before_run=True'
+        'Tinit=600,', 'Tfinal=100,', 'Tinterval=20,', 'step_duration=10**6,',
+        'dump_image=True,', 'reset_timestep_before_run=True))'
     ],
     'MSDMeasurement': [
-        'T=300', 'group=system.solvent_group', 'create_block_every=10000000',
-        'duration=200000000', 'dump_image=True',
-        'reset_timestep_before_run=True'
+        'T=300,', 'group=system.solvent_group,',
+        'create_block_every=10000000,', 'duration=200000000,',
+        'dump_image=True,', 'reset_timestep_before_run=True))'
     ],
     'ShearDeformation': [
-        'duration=10**7', 'erate=10**-6', 'T=300', 'dump_image=True',
-        'reset_timestep_before_run=True'
+        'duration=10**7,  # [fs]', 'shear_rate=1,  # [1/s]', 'T=300,',
+        'dump_image=True,', 'reset_timestep_before_run=True))'
     ],
     'TensileDeformation': [
-        'duration=10**7', 'erate=10**-6', 'T=300', 'P=1', 'dump_image=True',
-        'reset_timestep_before_run=True'
+        'duration=10**7,  # [fs]', 'erate=10**-6,  # [1/fs]', 'T=300,', 'P=1,',
+        'dump_image=True,', 'reset_timestep_before_run=True))'
     ],
     'HeatFluxMeasurement': [
-        'duration=10**7', 'T=300', 'dump_image=True',
-        'reset_timestep_before_run=True'
+        'duration=10**7,', 'T=300,', 'dump_image=True,',
+        'reset_timestep_before_run=True))'
     ]
 }
 
@@ -144,6 +144,11 @@ def create_script(file_name: str, system: str, system_size: str,
     process_number_field = 'ppn' if job == 'Torque' else 'ntasks_per_node'
     time_number_field = 'walltime' if job == 'Torque' else 'time'
 
+    # special case to change the MSDMeasurement group dynamically
+    if lammps == 'MSDMeasurement' and system != 'SolventSystem':
+        LAMMPS_FIELDS[lammps][1] = ('group=\'type 1\',  '
+                                    '# change the atom group to track')
+
     with open(file_name, 'w') as f:
         f.write('import pmd\n')
         f.write('\n')
@@ -174,16 +179,9 @@ def create_script(file_name: str, system: str, system_size: str,
         f.write(f'{indent}lmp.add_procedure(\n')
         for i, v in enumerate(LAMMPS_FIELDS[lammps]):
             if i == 0:
-                f.write(f'{indent}{indent}pmd.{lammps}({v},\n')
-            # special case to change the MSDMeasurement group dynamically
-            elif (i == 1 and lammps == 'MSDMeasurement'
-                  and system != 'SolventSystem'):
-                f.write(f'{lammps_indent}group=\'type 1\', '
-                        '# change the atom group to track\n')
-            elif i == len(LAMMPS_FIELDS[lammps]) - 1:
-                f.write(f'{lammps_indent}{v}))\n')
+                f.write(f'{indent}{indent}pmd.{lammps}({v}\n')
             else:
-                f.write(f'{lammps_indent}{v},\n')
+                f.write(f'{lammps_indent}{v}\n')
 
         f.write('\n')
 

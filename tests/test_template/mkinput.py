@@ -17,7 +17,7 @@ if __name__ == '__main__':
         pmd.TgMeasurement(Tinit=600,
                           Tfinal=100,
                           Tinterval=20,
-                          step_duration=1000000,
+                          step_duration=10**6,
                           dump_image=True,
                           reset_timestep_before_run=True))
 

@@ -127,15 +127,21 @@ reset_timestep  0
 dump            dump_ShearDeformation all custom 10000 shear_deformation.lammpstrj id mol type q xs ys zs ix iy iz
 restart         10000000 ShearDeformation.restart
 
-fix             fNVTSLLOD all nvt/sllod temp 300 300 $(100.0*dt)
-fix             fDEFORM all deform 1 xy erate 1e-06 remap v
+change_box      all triclinic
+kspace_style    pppm 1e-4  # must redefine pppm after changing to triclinic
 
-compute         tdeform all temp/deform # calculate temperautre by subtracting out a streaming velocity induced by deformation
+variable        srate_in_s equal 1  # shear rate [1/s]
+variable        srate equal ${srate_in_s}/1e15  # convert shear rate unit from 1/s to 1/fs
+
+fix             fNVTSLLOD all nvt/sllod temp 300 300 $(100.0*dt)
+fix             fDEFORM all deform 1 xy erate {srate} remap v
+
+compute         tdeform all temp/deform  # calculate temperautre by subtracting out a streaming velocity induced by deformation
 compute         pdeform all pressure tdeform
 thermo_modify   temp tdeform
 thermo_modify   press pdeform
 variable        stress equal (-1)*c_pdeform[4] # -pxy
-variable        visc equal 1.01325e8*v_stress/(v_srate) # shear viscosity [mPa s]; first term is unit converter
+variable        visc equal 1.01325e-10*v_stress/(v_srate)  # shear viscosity [Pa s]; first term is unit converter
 fix             fVISC all ave/time 100 1000 100000 v_visc ave one file viscosity.txt
 run             10000000
 

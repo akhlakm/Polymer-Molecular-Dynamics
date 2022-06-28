@@ -603,8 +603,9 @@ class ShearDeformation(Procedure):
     Attributes:
         duration (int): Duration of the deformation procedure (timestep unit)
 
-        erate (float): Engineering strain rate. The units of the specified
-                       strain rate are 1/time
+        shear_rate (float): Shear rate [1/s] (engineering strain rate
+                            in LAMMPS, see
+                            [here](https://docs.lammps.org/fix_deform.html))
 
         T (float): Temperature
 
@@ -625,13 +626,14 @@ class ShearDeformation(Procedure):
         reset_timestep_before_run (bool): Whether to reset timestep after the
                                           procedure; default: `False`
 
-        result_fname (str): Name of the result file; default:
+        result_fname (str): Name of the result file, viscosity will be dumped
+                            out to this file in the unit of [Pa s]; default:
                             `"viscosity.txt"`
     '''
 
     def __init__(self,
                  duration: int,
-                 erate: float,
+                 shear_rate: float,
                  T: float,
                  Tdamp: str = '$(100.0*dt)',
                  calculate_every: int = 100000,
@@ -640,7 +642,7 @@ class ShearDeformation(Procedure):
                  dump_every: int = 10000,
                  dump_image: bool = False,
                  reset_timestep_before_run: bool = False):
-        self._erate = erate
+        self._shear_rate = shear_rate
         self._T = T
         self._Tdamp = Tdamp
         self._calculate_every = calculate_every
@@ -650,15 +652,27 @@ class ShearDeformation(Procedure):
                          reset_timestep_before_run)
 
     def write_lammps(self, f: TextIOWrapper):
+        f.write(f'{"change_box":<15} all triclinic\n')
+        f.write(f'{"kspace_style":<15} pppm 1e-4  '
+                '# must redefine pppm after changing to triclinic\n')
+        f.write('\n')
+
+        f.write(f'{"variable":<15} srate_in_s equal {self._shear_rate}  '
+                '# shear rate [1/s]\n')
+        f.write(f'{"variable":<15} srate equal '
+                '${srate_in_s}/1e15  '
+                '# convert shear rate unit from 1/s to 1/fs\n')
+        f.write('\n')
+
         f.write(f'{"fix":<15} fNVTSLLOD all nvt/sllod '
                 f'temp {self._T} {self._T} {self._Tdamp}\n')
-        f.write(f'{"fix":<15} fDEFORM all deform 1 xy erate {self._erate} '
-                f'remap v\n')
+        f.write(f'{"fix":<15} fDEFORM all deform 1 xy erate '
+                '{srate} remap v\n')
         f.write('\n')
 
         temp_deform_id = 'tdeform'
         press_deform_id = 'pdeform'
-        f.write(f'{"compute":<15} {temp_deform_id} all temp/deform '
+        f.write(f'{"compute":<15} {temp_deform_id} all temp/deform  '
                 '# calculate temperautre by subtracting out a '
                 'streaming velocity induced by deformation\n')
         f.write(f'{"compute":<15} {press_deform_id} all '
@@ -669,9 +683,9 @@ class ShearDeformation(Procedure):
                 f'(-1)*c_{press_deform_id}[4] # -pxy\n')
 
         # TODO: this assume the LAMMPS units is real, make it more flexible
-        # Caclulate shear viscosity [mPa s]
-        f.write(f'{"variable":<15} visc equal 1.01325e8*v_stress/(v_srate) '
-                '# shear viscosity [mPa s]; first term is unit converter\n')
+        # Caclulate shear viscosity [Pa s]
+        f.write(f'{"variable":<15} visc equal 1.01325e-10*v_stress/(v_srate) '
+                ' # shear viscosity [Pa s]; first term is unit converter\n')
         f.write(f'{"fix":<15} fVISC all '
                 f'ave/time 100 1000 {self._calculate_every} v_visc '
                 f'ave one file {self._result_fname}\n')
