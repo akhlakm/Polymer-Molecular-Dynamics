@@ -603,8 +603,8 @@ class ShearDeformation(Procedure):
     Attributes:
         duration (int): Duration of the deformation procedure (timestep unit)
 
-        shear_rate (float): Shear rate [1/s] (engineering strain rate 
-                            in LAMMPS, see 
+        shear_rate (float): Shear rate [1/s] (engineering strain rate
+                            in LAMMPS, see
                             [here](https://docs.lammps.org/fix_deform.html))
 
         T (float): Temperature
