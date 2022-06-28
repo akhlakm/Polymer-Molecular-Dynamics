@@ -14,11 +14,12 @@ if __name__ == '__main__':
     lmp.add_procedure(
         pmd.Equilibration(Teq=300, Peq=1, Tmax=800, Pmax=49346.163))
     lmp.add_procedure(
-        pmd.TensileDeformation(duration=10**7,
-                               erate=10**-6,
-                               T=300,
-                               P=1,
-                               reset_timestep_before_run=True))
+        pmd.TensileDeformation(
+            duration=10**7,  #[fs]
+            erate=10**-6,  #[fs]
+            T=300,
+            P=1,
+            reset_timestep_before_run=True))
 
     # Setup for the Torque scheduling system's job file
     job = pmd.Torque(run_lammps=lmp,

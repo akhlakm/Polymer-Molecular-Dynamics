@@ -273,8 +273,9 @@ to calculate shear viscosity.
 
 - `duration` _int_ - Duration of the deformation procedure (timestep unit)
   
-- `erate` _float_ - Engineering strain rate. The units of the specified
-  strain rate are 1/time
+- `shear_rate` _float_ - Shear rate [1/s] (engineering strain rate
+  in LAMMPS, see
+  [here](https://docs.lammps.org/fix_deform.html))
   
 - `T` _float_ - Temperature
   
@@ -295,7 +296,8 @@ to calculate shear viscosity.
 - `reset_timestep_before_run` _bool_ - Whether to reset timestep after the
   procedure; default: `False`
   
-- `result_fname` _str_ - Name of the result file; default:
+- `result_fname` _str_ - Name of the result file, viscosity will be dumped
+  out to this file in the unit of [Pa s]; default:
   `"viscosity.txt"`
 
 ## HeatFluxMeasurement Objects

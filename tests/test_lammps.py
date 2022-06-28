@@ -43,7 +43,7 @@ from pmd.core import (EMC, NPT, NVT, PSP, Equilibration, HeatFluxMeasurement,
             Minimization(),
             Equilibration(Teq=300, Peq=1, Tmax=800, Pmax=49346.163),
             ShearDeformation(duration=10**7,
-                             erate=10**-6,
+                             shear_rate=1,
                              T=300,
                              reset_timestep_before_run=True)
         ], PSP('gaff2-gasteiger'), 'lmp_ShearDeformation.in'),
