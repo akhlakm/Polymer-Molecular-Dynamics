@@ -15,8 +15,8 @@ if __name__ == '__main__':
         pmd.Equilibration(Teq=300, Peq=1, Tmax=800, Pmax=49346.163))
     lmp.add_procedure(
         pmd.TensileDeformation(
-            duration=10**7,  #[fs]
-            erate=10**-6,  #[fs]
+            duration=10**7,  # [fs]
+            erate=10**-6,  # [fs]
             T=300,
             P=1,
             reset_timestep_before_run=True))
