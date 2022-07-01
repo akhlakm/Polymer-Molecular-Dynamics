@@ -16,7 +16,7 @@ from pmd.core import (EMC, NPT, NVT, PSP, Equilibration, HeatFluxMeasurement,
         ], PSP('opls-lbcc'), 'lmp_Equilibration.in'),
         ([
             Minimization(),
-            Equilibration(Teq=300, Peq=1, Tmax=800, Pmax=49346.163),
+            Equilibration(Teq=600, Peq=1, Tmax=800, Pmax=49346.163),
             TgMeasurement(
                 Tinit=600, Tfinal=100, Tinterval=20, step_duration=1000000)
         ], EMC('opls-aa'), 'lmp_TgMeasurement.in'),
