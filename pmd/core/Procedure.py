@@ -50,7 +50,7 @@ class Minimization(Procedure):
     local potential energy minimum.
 
     Attributes:
-        min_style (str): Minimization algorithm, see 
+        min_style (str): Minimization algorithm, see
             [here](https://docs.lammps.org/min_style.html) for all options
             ; default: `"cg"`
 
@@ -320,7 +320,7 @@ class MSDMeasurement(Procedure):
 
     Attributes:
         duration (int): Duration of this NVT procedure (timestep unit)
-        
+
         T (float): Temperature
 
         group (str): The group of atoms that will be considered for MSD
@@ -428,10 +428,10 @@ class TgMeasurement(Procedure):
 
         Tinterval (float): Temperature interval of the cooling process
             ; default: `20`
- 
+
         step_duration (int): Duration of each temperature step (timestep unit)
             ; default: `1000000`
- 
+
         pressure (float): Pressure during the cooling process; default: `1`
 
         Tdamp (str): Damping parameter for the thermostat; default:
