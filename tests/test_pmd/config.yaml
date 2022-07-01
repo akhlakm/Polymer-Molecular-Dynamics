@@ -37,6 +37,7 @@ pmd.Lammps:
       Pmax: 49346.163
       Tdamp: $(100.0*dt)
       Pdamp: $(100.0*dt)
+      nve_limit_start: true
       duration: 1560000
       dump_fname: equil.lammpstrj
       dump_every: 10000

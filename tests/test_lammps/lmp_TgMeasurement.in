@@ -34,15 +34,22 @@ reset_timestep  0
 dump            dump_Equilibration all custom 10000 equil.lammpstrj id mol type q xs ys zs ix iy iz
 restart         1560000 Equilibration.restart
 
+fix             fLANGEVIN all langevin 800 800 $(100.0*dt) 723853
+fix             fNVELIMIT all nve/limit 0.1
+run             10000
+unfix           fLANGEVIN
+unfix           fNVELIMIT
+reset_timestep  0
+
 fix             step1 all nvt temp 800 800 $(100.0*dt)
 run             50000
 unfix           step1
 
-fix             step2 all nvt temp 300 300 $(100.0*dt)
+fix             step2 all nvt temp 600 600 $(100.0*dt)
 run             50000
 unfix           step2
 
-fix             step3 all npt temp 300 300 $(100.0*dt) iso 986.92326 986.92326 $(100.0*dt)
+fix             step3 all npt temp 600 600 $(100.0*dt) iso 986.92326 986.92326 $(100.0*dt)
 run             50000
 unfix           step3
 
@@ -50,11 +57,11 @@ fix             step4 all nvt temp 800 800 $(100.0*dt)
 run             50000
 unfix           step4
 
-fix             step5 all nvt temp 300 300 $(100.0*dt)
+fix             step5 all nvt temp 600 600 $(100.0*dt)
 run             100000
 unfix           step5
 
-fix             step6 all npt temp 300 300 $(100.0*dt) iso 29607.697799999998 29607.697799999998 $(100.0*dt)
+fix             step6 all npt temp 600 600 $(100.0*dt) iso 29607.697799999998 29607.697799999998 $(100.0*dt)
 run             50000
 unfix           step6
 
@@ -62,11 +69,11 @@ fix             step7 all nvt temp 800 800 $(100.0*dt)
 run             50000
 unfix           step7
 
-fix             step8 all nvt temp 300 300 $(100.0*dt)
+fix             step8 all nvt temp 600 600 $(100.0*dt)
 run             100000
 unfix           step8
 
-fix             step9 all npt temp 300 300 $(100.0*dt) iso 49346.163 49346.163 $(100.0*dt)
+fix             step9 all npt temp 600 600 $(100.0*dt) iso 49346.163 49346.163 $(100.0*dt)
 run             50000
 unfix           step9
 
@@ -74,11 +81,11 @@ fix             step10 all nvt temp 800 800 $(100.0*dt)
 run             50000
 unfix           step10
 
-fix             step11 all nvt temp 300 300 $(100.0*dt)
+fix             step11 all nvt temp 600 600 $(100.0*dt)
 run             100000
 unfix           step11
 
-fix             step12 all npt temp 300 300 $(100.0*dt) iso 24673.0815 24673.0815 $(100.0*dt)
+fix             step12 all npt temp 600 600 $(100.0*dt) iso 24673.0815 24673.0815 $(100.0*dt)
 run             5000
 unfix           step12
 
@@ -86,11 +93,11 @@ fix             step13 all nvt temp 800 800 $(100.0*dt)
 run             5000
 unfix           step13
 
-fix             step14 all nvt temp 300 300 $(100.0*dt)
+fix             step14 all nvt temp 600 600 $(100.0*dt)
 run             10000
 unfix           step14
 
-fix             step15 all npt temp 300 300 $(100.0*dt) iso 4934.616300000001 4934.616300000001 $(100.0*dt)
+fix             step15 all npt temp 600 600 $(100.0*dt) iso 4934.616300000001 4934.616300000001 $(100.0*dt)
 run             5000
 unfix           step15
 
@@ -98,11 +105,11 @@ fix             step16 all nvt temp 800 800 $(100.0*dt)
 run             5000
 unfix           step16
 
-fix             step17 all nvt temp 300 300 $(100.0*dt)
+fix             step17 all nvt temp 600 600 $(100.0*dt)
 run             10000
 unfix           step17
 
-fix             step18 all npt temp 300 300 $(100.0*dt) iso 493.46163 493.46163 $(100.0*dt)
+fix             step18 all npt temp 600 600 $(100.0*dt) iso 493.46163 493.46163 $(100.0*dt)
 run             5000
 unfix           step18
 
@@ -110,11 +117,11 @@ fix             step19 all nvt temp 800 800 $(100.0*dt)
 run             5000
 unfix           step19
 
-fix             step20 all nvt temp 300 300 $(100.0*dt)
+fix             step20 all nvt temp 600 600 $(100.0*dt)
 run             10000
 unfix           step20
 
-fix             step21 all npt temp 300 300 $(100.0*dt) iso 1 1 $(100.0*dt)
+fix             step21 all npt temp 600 600 $(100.0*dt) iso 1 1 $(100.0*dt)
 run             800000
 unfix           step21
 

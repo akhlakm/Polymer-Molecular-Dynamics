@@ -34,6 +34,13 @@ reset_timestep  0
 dump            dump_Equilibration all custom 10000 equil.lammpstrj id mol type q xs ys zs ix iy iz
 restart         1560000 Equilibration.restart
 
+fix             fLANGEVIN all langevin 800 800 $(100.0*dt) 723853
+fix             fNVELIMIT all nve/limit 0.1
+run             10000
+unfix           fLANGEVIN
+unfix           fNVELIMIT
+reset_timestep  0
+
 fix             step1 all nvt temp 800 800 $(100.0*dt)
 run             50000
 unfix           step1

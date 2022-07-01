@@ -51,14 +51,14 @@ class Minimization(Procedure):
 
     Attributes:
         min_style (str): Minimization algorithm, see
-                         [here](https://docs.lammps.org/min_style.html) for all
-                         options; default: `"cg"`
+            [here](https://docs.lammps.org/min_style.html) for all options
+            ; default: `"cg"`
 
         etol (float): Stopping tolerance for energy (unitless); default:
-                      `10**(-8)`
+           `10**(-8)`
 
         ftol (float): Stopping tolerance for force (force units); default:
-                      `10**(-10)`
+            `10**(-10)`
 
         maxiter (int): Max iterations of minimizer; default: `10**7`
 
@@ -100,26 +100,32 @@ class Equilibration(Procedure):
         Peq (float): Target equilibration pressure; default: `1`
 
         Tmax (float): Maximum temperature during the equilibration; default:
-                      `600`
+           `600`
 
         Pmax (float): Maximum pressure during the equilibration; default:
-                      `50000`
+            `50000`
 
         Tdamp (str): Damping parameter for the thermostat; default:
-                     `"$(100.0*dt)"`
+            `"$(100.0*dt)"`
 
         Pdamp (str): Damping parameter for the barostat; default:
-                     `"$(100.0*dt)"`
+            `"$(100.0*dt)"`
+
+        nve_limit_start (bool): Whether to start the simulation with a fix
+            nve/limit for 10000 timesteps. This avoids simulation failure due
+            to a bad initial configuration, see more at
+            [here](https://docs.lammps.org/fix_nve_limit.html); default:
+            `True`
 
         dump_fname (str): Name of the dump file; default: `"equil.lammpstrj"`
 
         dump_every (int): Dump every this many timesteps; default: `10000`
 
         dump_image (bool): Whether to dump a image file at the end of the run
-                           ; default: `False`
+            ; default: `False`
 
         reset_timestep_before_run (bool): Whether to reset timestep after the
-                                          procedure; default: `True`
+            procedure; default: `True`
     '''
 
     def __init__(self,
@@ -129,6 +135,7 @@ class Equilibration(Procedure):
                  Pmax: float = 50000,
                  Tdamp: str = '$(100.0*dt)',
                  Pdamp: str = '$(100.0*dt)',
+                 nve_limit_start: bool = True,
                  dump_fname: str = 'equil.lammpstrj',
                  dump_every: int = 10000,
                  dump_image: bool = False,
@@ -139,6 +146,7 @@ class Equilibration(Procedure):
         self._Pmax = Pmax
         self._Tdamp = Tdamp
         self._Pdamp = Pdamp
+        self._nve_limit_start = nve_limit_start
 
         duration = 0
         for i in self._eq_steps:
@@ -174,6 +182,16 @@ class Equilibration(Procedure):
         ]
 
     def write_lammps(self, f: TextIOWrapper):
+        if self._nve_limit_start:
+            f.write(f'{"fix":<15} fLANGEVIN all langevin '
+                    f'{self._Tmax} {self._Tmax} {self._Tdamp} 723853\n')
+            f.write(f'{"fix":<15} fNVELIMIT all nve/limit 0.1\n')
+            f.write(f'{"run":<15} 10000\n')
+            f.write(f'{"unfix":<15} fLANGEVIN\n')
+            f.write(f'{"unfix":<15} fNVELIMIT\n')
+            f.write(f'{"reset_timestep":<15} 0\n')
+            f.write('\n')
+
         for n, i in enumerate(self._eq_steps):
             if i[0] == 'nvt':
                 f.write(f'{"fix":<15} step{n + 1} all nvt temp '
@@ -202,20 +220,20 @@ class NPT(Procedure):
         Pfinal (float): Final pressure
 
         Tdamp (str): Damping parameter for the thermostat; default:
-                     `"$(100.0*dt)"`
+            `"$(100.0*dt)"`
 
         Pdamp (str): Damping parameter for the barostat; default:
-                     `"$(100.0*dt)"`
+            `"$(100.0*dt)"`
 
         dump_fname (str): Name of the dump file; default: `"npt.lammpstrj"`
 
         dump_every (int): Dump every this many timesteps; default: `10000`
 
         dump_image (bool): Whether to dump a image file at the end of the run
-                           ; default: `False`
+            ; default: `False`
 
         reset_timestep_before_run (bool): Whether to reset timestep after the
-                                          procedure; default: `False`
+            procedure; default: `False`
     '''
 
     def __init__(self,
@@ -260,17 +278,17 @@ class NVT(Procedure):
         Tfinal (float): Final temperature
 
         Tdamp (str): Damping parameter for thermostats; default:
-                     `"$(100.0*dt)"`
+            `"$(100.0*dt)"`
 
         dump_fname (str): Name of the dump file; default: `"nvt.lammpstrj"`
 
         dump_every (int): Dump every this many timesteps; default: `10000`
 
         dump_image (bool): Whether to dump a image file at the end of the run
-                           ; default: `False`
+            ; default: `False`
 
         reset_timestep_before_run (bool): Whether to reset timestep after the
-                                          procedure; default: `False`
+            procedure; default: `False`
     '''
 
     def __init__(self,
@@ -306,32 +324,30 @@ class MSDMeasurement(Procedure):
         T (float): Temperature
 
         group (str): The group of atoms that will be considered for MSD
-                     calculation. This has to be a string that matches the
-                     syntax of [group](https://docs.lammps.org/group.html)
-                     LAMMPS command (e.g. `"molecule <=50"`, `"type 1 2"`, etc)
+            calculation. This has to be a string that matches the syntax of
+            [group](https://docs.lammps.org/group.html) LAMMPS command
+            (e.g. `"molecule <=50"`, `"type 1 2"`, etc
 
         create_block_every (int): The time interval that new MSD calculation
-                                  starting point will be created (e.g. for a
-                                  1000 fs run, a `create_block_every` value of
-                                  100fs would result in 10 blocks with 10
-                                  different MSD starting point and length)
-                                  ; default: `None`
+            starting point will be created (e.g. for a 1000 fs run, a
+            `create_block_every` value of 100fs would result in 10 blocks with
+            10 different MSD starting point and length) ; default: `None`
 
         result_folder_name (str): The name of the folder that PMD creates and
-                                  put result files in; default: `"result"`
+            put result files in; default: `"result"`
 
         Tdamp (str): Damping parameter for thermostats; default:
-                     `"$(100.0*dt)"`
+            `"$(100.0*dt)"`
 
         dump_fname (str): Name of the dump file; default: `"nvt.lammpstrj"`
 
         dump_every (int): Dump every this many timesteps; default: `10000`
 
         dump_image (bool): Whether to dump a image file at the end of the run
-                           ; default: `False`
+            ; default: `False`
 
         reset_timestep_before_run (bool): Whether to reset timestep after the
-                                          procedure; default: `False`
+            procedure; default: `False`
     '''
 
     def __init__(self,
@@ -405,35 +421,35 @@ class TgMeasurement(Procedure):
 
     Attributes:
         Tinit (float): Initial temperature of the cooling process; default:
-                       `500`
+            `500`
 
         Tfinal (float): Final temperature of the cooling process; default:
-                        `100`
+            `100`
 
         Tinterval (float): Temperature interval of the cooling process
-                           ; default: `20`
+            ; default: `20`
 
-        step_duration (int): Duration of each temperature step
-                             (timestep unit); default: `1000000`
+        step_duration (int): Duration of each temperature step (timestep unit)
+            ; default: `1000000`
 
         pressure (float): Pressure during the cooling process; default: `1`
 
         Tdamp (str): Damping parameter for the thermostat; default:
-                     `"$(100.0*dt)"`
+            `"$(100.0*dt)"`
 
         Pdamp (str): Damping parameter for the barostat; default:
-                     `"$(100.0*dt)"`
+            `"$(100.0*dt)"`
 
         dump_fname (str): Name of the dump file; default:
-                          `"Tg_measurement.lammpstrj"`
+            `"Tg_measurement.lammpstrj"`
 
         dump_every (int): Dump every this many timesteps; default: `10000`
 
         dump_image (bool): Whether to dump a image file at the end of the run
-                           ; default: `False`
+            ; default: `False`
 
         result_fname (str): Name of the result file; default:
-                            `"temp_vs_density.txt"`
+            `"temp_vs_density.txt"`
     '''
 
     def __init__(self,
@@ -506,34 +522,34 @@ class TensileDeformation(Procedure):
         duration (int): Duration of the deformation procedure (timestep unit)
 
         erate (float): Engineering strain rate. The units of the specified
-                       strain rate are 1/time
+            strain rate are 1/time
 
         T (float): Temperature
 
         P (float): Pressure
 
         Tdamp (str): Damping parameter for thermostats; default:
-                     `"$(100.0*dt)"`
+            `"$(100.0*dt)"`
 
         Pdamp (str): Damping parameter for thermostats; default:
-                     `"$(100.0*dt)"`
+            `"$(100.0*dt)"`
 
         print_every (int): Print result to the result file every this many
-                           timesteps; default: `1000`
+            timesteps; default: `1000`
 
         dump_fname (str): Name of the dump file; default:
-                          `"tensile_deformation.lammpstrj"`
+            `"tensile_deformation.lammpstrj"`
 
         dump_every (int): Dump every this many timesteps; default: `10000`
 
         dump_image (bool): Whether to dump a image file at the end of the run
-                           ; default: `False`
+            ; default: `False`
 
         reset_timestep_before_run (bool): Whether to reset timestep after the
-                                          procedure; default: `False`
+             procedure; default: `False`
 
         result_fname (str): Name of the result file; default:
-                            `"stress_vs_strain.txt"`
+            `"stress_vs_strain.txt"`
     '''
 
     def __init__(self,
@@ -604,31 +620,29 @@ class ShearDeformation(Procedure):
         duration (int): Duration of the deformation procedure (timestep unit)
 
         shear_rate (float): Shear rate [1/s] (engineering strain rate
-                            in LAMMPS, see
-                            [here](https://docs.lammps.org/fix_deform.html))
+            in LAMMPS, see [here](https://docs.lammps.org/fix_deform.html))
 
         T (float): Temperature
 
         Tdamp (str): Damping parameter for thermostats; default:
-                     `"$(100.0*dt)"`
+            `"$(100.0*dt)"`
 
         calculate_every (int): Calculate result every this many
-                               timesteps; default: `100000`
+            timesteps; default: `100000`
 
         dump_fname (str): Name of the dump file; default:
-                          `"shear_deformation.lammpstrj"`
+            `"shear_deformation.lammpstrj"`
 
         dump_every (int): Dump every this many timesteps; default: `10000`
 
         dump_image (bool): Whether to dump a image file at the end of the run
-                           ; default: `False`
+            ; default: `False`
 
         reset_timestep_before_run (bool): Whether to reset timestep after the
-                                          procedure; default: `False`
+            procedure; default: `False`
 
         result_fname (str): Name of the result file, viscosity will be dumped
-                            out to this file in the unit of [Pa s]; default:
-                            `"viscosity.txt"`
+            out to this file in the unit of [Pa s]; default: `"viscosity.txt"`
     '''
 
     def __init__(self,
@@ -707,18 +721,18 @@ class HeatFluxMeasurement(Procedure):
         T (float): Temperature
 
         Tdamp (str): Damping parameter for thermostats; default:
-                     `"$(100.0*dt)"`
+            `"$(100.0*dt)"`
 
         dump_fname (str): Name of the dump file; default:
-                          `"heatflux_measurement.lammpstrj"`
+            `"heatflux_measurement.lammpstrj"`
 
         dump_every (int): Dump every this many timesteps; default: `10000`
 
         dump_image (bool): Whether to dump a image file at the end of the run
-                           ; default: `False`
+            ; default: `False`
 
         reset_timestep_before_run (bool): Whether to reset timestep after the
-                                          procedure; default: `False`
+            procedure; default: `False`
 
         result_fname (str): Name of the result file; default: `"J0Jt.txt"`
     '''

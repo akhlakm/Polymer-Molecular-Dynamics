@@ -17,8 +17,8 @@ local potential energy minimum.
 **Attributes**:
 
 - `min_style` _str_ - Minimization algorithm, see
-  [here](https://docs.lammps.org/min_style.html) for all
-  options; default: `"cg"`
+  [here](https://docs.lammps.org/min_style.html) for all options
+  ; default: `"cg"`
   
 - `etol` _float_ - Stopping tolerance for energy (unitless); default:
   `10**(-8)`
@@ -56,6 +56,12 @@ Hart, and Colina, Theoretical Chemistry Accounts, 132(3), 1-19, 2013.
   
 - `Pdamp` _str_ - Damping parameter for the barostat; default:
   `"$(100.0*dt)"`
+  
+- `nve_limit_start` _bool_ - Whether to start the simulation with a fix
+  nve/limit for 10000 timesteps. This avoids simulation failure due
+  to a bad initial configuration, see more at
+  [here](https://docs.lammps.org/fix_nve_limit.html); default:
+  `True`
   
 - `dump_fname` _str_ - Name of the dump file; default: `"equil.lammpstrj"`
   
@@ -148,16 +154,14 @@ Perform the simulation under NVT ensemble (via Nose-Hoover thermostat).
 - `T` _float_ - Temperature
   
 - `group` _str_ - The group of atoms that will be considered for MSD
-  calculation. This has to be a string that matches the
-  syntax of [group](https://docs.lammps.org/group.html)
-  LAMMPS command (e.g. `"molecule <=50"`, `"type 1 2"`, etc)
+  calculation. This has to be a string that matches the syntax of
+  [group](https://docs.lammps.org/group.html) LAMMPS command
+  (e.g. `"molecule <=50"`, `"type 1 2"`, etc
   
 - `create_block_every` _int_ - The time interval that new MSD calculation
-  starting point will be created (e.g. for a
-  1000 fs run, a `create_block_every` value of
-  100fs would result in 10 blocks with 10
-  different MSD starting point and length)
-  ; default: `None`
+  starting point will be created (e.g. for a 1000 fs run, a
+  `create_block_every` value of 100fs would result in 10 blocks with
+  10 different MSD starting point and length) ; default: `None`
   
 - `result_folder_name` _str_ - The name of the folder that PMD creates and
   put result files in; default: `"result"`
@@ -195,8 +199,8 @@ by iteratively cooling the system and equilibrate.
 - `Tinterval` _float_ - Temperature interval of the cooling process
   ; default: `20`
   
-- `step_duration` _int_ - Duration of each temperature step
-  (timestep unit); default: `1000000`
+- `step_duration` _int_ - Duration of each temperature step (timestep unit)
+  ; default: `1000000`
   
 - `pressure` _float_ - Pressure during the cooling process; default: `1`
   
@@ -274,8 +278,7 @@ to calculate shear viscosity.
 - `duration` _int_ - Duration of the deformation procedure (timestep unit)
   
 - `shear_rate` _float_ - Shear rate [1/s] (engineering strain rate
-  in LAMMPS, see
-  [here](https://docs.lammps.org/fix_deform.html))
+  in LAMMPS, see [here](https://docs.lammps.org/fix_deform.html))
   
 - `T` _float_ - Temperature
   
@@ -297,8 +300,7 @@ to calculate shear viscosity.
   procedure; default: `False`
   
 - `result_fname` _str_ - Name of the result file, viscosity will be dumped
-  out to this file in the unit of [Pa s]; default:
-  `"viscosity.txt"`
+  out to this file in the unit of [Pa s]; default: `"viscosity.txt"`
 
 ## HeatFluxMeasurement Objects
 
