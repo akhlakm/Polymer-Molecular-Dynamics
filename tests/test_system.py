@@ -91,16 +91,18 @@ def test_system_exceptions(test_data):
                         mw_per_chain=1000)
         system.write_data()
 
-    # Builder class itself shouldn't be used
+    # Using Builder class itself is not allowed
     bare_builder = Builder('pcff', ('pcff'))
-    with pytest.raises(Exception):
-        bare_builder.write_data()
+    with pytest.raises(NotImplementedError):
+        bare_builder.write_data('.', '*CC*', 0.5, 1000, 10, 10, 'data.lmps',
+                                True)
 
-    with pytest.raises(Exception):
-        bare_builder.write_functional_form()
+    with pytest.raises(NotImplementedError):
+        bare_builder.write_functional_form(False)
 
-    with pytest.raises(Exception):
-        bare_builder.write_solvent_data()
+    with pytest.raises(NotImplementedError):
+        bare_builder.write_solvent_data('.', '*CC*', 'CCO', 0.5, 1000, 10, 10,
+                                        10, 'data.lmps', True)
 
 
 @pytest.mark.parametrize(
