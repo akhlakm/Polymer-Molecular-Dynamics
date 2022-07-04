@@ -1,7 +1,7 @@
 import os
 import shutil
 from io import TextIOWrapper
-from typing import Tuple
+from typing import Optional, Tuple
 
 import numpy as np
 import pandas as pd
@@ -56,7 +56,7 @@ class EMC(Builder):
 
     Attributes:
         force_field (str): Force field, options are `"pcff"`, `"opls-aa"`,
-        `"opls-ua"`, and `"trappe"`
+            `"opls-ua"`, and `"trappe"`
     '''
 
     def __init__(self, force_field: str) -> None:
@@ -261,11 +261,25 @@ class PSP(Builder):
 
     Attributes:
         force_field (str): Force field, options are `"opls-lbcc"`,
-        `"opls-cm1a"`, `"gaff2-gasteiger"`, and `"gaff2-am1bcc"`
+            `"opls-cm1a"`, `"gaff2-gasteiger"`, and `"gaff2-am1bcc"`
+
+        packmol_nloop (int): Maximum number of optimization loops of Packmol
+            (PSP uses Packmol to pack molecules into a box); default: None
+
+        packmol_precision (float): Packmol avoids atom overlaps by ensuring
+            a 2.0 Angs atom distance, this parameter determines how close the
+            solution must be to the desired distances to be considered correct
+            ; default: None
     '''
 
-    def __init__(self, force_field: str) -> None:
+    def __init__(self,
+                 force_field: str,
+                 packmol_nloop: Optional[int] = None,
+                 packmol_precision: Optional[float] = None) -> None:
+
         super().__init__(force_field, PSP_FORCE_FIELD_OPTIONS)
+        self._packmol_nloop = packmol_nloop
+        self._packmol_precision = packmol_precision
 
     @staticmethod
     def _add_brackets_to_asterisks(smiles: str) -> str:
@@ -289,6 +303,11 @@ class PSP(Builder):
                 amor = ab.Builder(pd.DataFrame(data=input_data),
                                   density=density,
                                   outdir=output_dir)
+                # adjust packmol parameters if specified
+                if self._nloop or self._precision:
+                    amor.set_packmol_params = ab.packmol_params(
+                        nloop=self._packmol_nloop,
+                        precision=self._packmol_precision)
                 amor.Build()
 
                 if self._is_opls_force_field():
@@ -305,9 +324,8 @@ class PSP(Builder):
                             'nt': 'n',
                             'nv': 'nh'
                         })
-            Pmdlogging.info(
-                f'System file - {data_fname} successfully created in {output_dir}'
-            )
+            Pmdlogging.info(f'System file - {data_fname} '
+                            f'successfully created in {output_dir}')
         finally:
             if cleanup:
                 force_field_dname = 'ligpargen' if self._is_opls_force_field(
