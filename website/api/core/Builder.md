@@ -34,4 +34,12 @@ package. This object should be used as input argument of `System` or
 
 - `force_field` _str_ - Force field, options are `"opls-lbcc"`,
   `"opls-cm1a"`, `"gaff2-gasteiger"`, and `"gaff2-am1bcc"`
+  
+- `packmol_nloop` _int_ - Maximum number of optimization loops of Packmol
+  (PSP uses Packmol to pack molecules into a box); default: None
+  
+- `packmol_precision` _float_ - Packmol avoids atom overlaps by ensuring
+  a 2.0 Angs atom distance, this parameter determines how close the
+  solution must be to the desired distances to be considered correct
+  ; default: None
 
