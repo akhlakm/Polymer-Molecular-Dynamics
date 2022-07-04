@@ -1,6 +1,7 @@
 import pytest
 
 from pmd.core import EMC, PSP, SolventSystem, System
+from pmd.core.Builder import Builder
 
 
 @pytest.fixture
@@ -69,6 +70,10 @@ def test_system_exceptions(test_data):
     with pytest.raises(ValueError):
         syst.builder = 'pcff'
 
+    # Invalid force_field provided for the builder
+    with pytest.raises(ValueError):
+        syst.builder = EMC('xyz')
+
     # No system size option provided
     with pytest.raises(ValueError):
         system = System('*CC*',
@@ -85,6 +90,17 @@ def test_system_exceptions(test_data):
                         natoms_per_chain=100,
                         mw_per_chain=1000)
         system.write_data()
+
+    # Builder class itself shouldn't be used
+    bare_builder = Builder('pcff', ('pcff'))
+    with pytest.raises(Exception):
+        bare_builder.write_data()
+
+    with pytest.raises(Exception):
+        bare_builder.write_functional_form()
+
+    with pytest.raises(Exception):
+        bare_builder.write_solvent_data()
 
 
 @pytest.mark.parametrize(
