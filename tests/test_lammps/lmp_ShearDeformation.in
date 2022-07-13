@@ -131,11 +131,11 @@ undump          dump_Equilibration
 ### ShearDeformation
 reset_timestep  0
 
-dump            dump_ShearDeformation all custom 10000 shear_deformation.lammpstrj id mol type q xs ys zs ix iy iz
-restart         10000000 ShearDeformation.restart
-
 change_box      all triclinic
 kspace_style    pppm 1e-4  # must redefine pppm after changing to triclinic
+
+dump            dump_ShearDeformation all custom 10000 shear_deformation.lammpstrj id mol type q xs ys zs ix iy iz
+restart         10000000 ShearDeformation.restart
 
 variable        srate_in_s equal 1  # shear rate [1/s]
 variable        srate equal ${srate_in_s}/1e15  # convert shear rate unit from 1/s to 1/fs
