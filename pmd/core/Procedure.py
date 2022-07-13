@@ -665,10 +665,27 @@ class ShearDeformation(Procedure):
         super().__init__(duration, dump_fname, dump_every, dump_image,
                          reset_timestep_before_run)
 
+    # dump instructions have to go after change_box command
+    def write_before_run(self, f: TextIOWrapper):
+        pass
+
     def write_lammps(self, f: TextIOWrapper):
+        f.write(f'### {self}\n')
+        if self._reset_timestep_before_run:
+            f.write(f'{"reset_timestep":<15} 0\n')
+        f.write('\n')
+
         f.write(f'{"change_box":<15} all triclinic\n')
         f.write(f'{"kspace_style":<15} pppm 1e-4  '
                 '# must redefine pppm after changing to triclinic\n')
+        f.write('\n')
+
+        f.write(f'{"dump":<15} dump_{self} all custom {self._dump_every} '
+                f'{self._dump_fname} id mol type q xs ys zs ix iy iz\n')
+        if self._dump_image:
+            f.write(f'{"dump":<15} dump_image all image {self._duration} '
+                    f'{self}.*.jpg type type\n')
+        f.write(f'{"restart":<15} {self._duration} {self}.restart\n')
         f.write('\n')
 
         f.write(f'{"variable":<15} srate_in_s equal {self._shear_rate}  '
