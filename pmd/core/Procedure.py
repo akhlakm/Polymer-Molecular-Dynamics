@@ -698,7 +698,7 @@ class ShearDeformation(Procedure):
         f.write(f'{"fix":<15} fNVTSLLOD all nvt/sllod '
                 f'temp {self._T} {self._T} {self._Tdamp}\n')
         f.write(f'{"fix":<15} fDEFORM all deform 1 xy erate '
-                '{srate} remap v\n')
+                '${srate} remap v\n')
         f.write('\n')
 
         temp_deform_id = 'tdeform'

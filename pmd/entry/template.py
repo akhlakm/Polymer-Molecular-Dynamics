@@ -163,6 +163,10 @@ def create_script(file_name: str, system: str, system_size: str,
             f.write(f'{indent}{indent}solvent_smiles=\'CCO\',  '
                     '# change to your solvent SMILES\n')
             f.write(f'{indent}{indent}ru_nsolvent_ratio=\'0.1\',\n')
+        elif system == 'GasSystem':
+            f.write(f'{indent}{indent}gas_smiles=\'C\',  '
+                    '# gas options: C, O=C=O, N#N, O=O\n')
+
         f.write(f'{indent}{indent}density=0.8,\n')
         f.write(f'{indent}{indent}{system_size},\n')
         f.write(f'{indent}{indent}{chain_length},\n')

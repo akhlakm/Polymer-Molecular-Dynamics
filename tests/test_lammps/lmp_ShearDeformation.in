@@ -141,7 +141,7 @@ variable        srate_in_s equal 1  # shear rate [1/s]
 variable        srate equal ${srate_in_s}/1e15  # convert shear rate unit from 1/s to 1/fs
 
 fix             fNVTSLLOD all nvt/sllod temp 300 300 $(100.0*dt)
-fix             fDEFORM all deform 1 xy erate {srate} remap v
+fix             fDEFORM all deform 1 xy erate ${srate} remap v
 
 compute         tdeform all temp/deform  # calculate temperautre by subtracting out a streaming velocity induced by deformation
 compute         pdeform all pressure tdeform
