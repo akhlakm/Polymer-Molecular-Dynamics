@@ -304,7 +304,7 @@ class PSP(Builder):
                                   density=density,
                                   outdir=output_dir)
                 # adjust packmol parameters if specified
-                if self._nloop or self._precision:
+                if self._packmol_nloop or self._packmol_precision:
                     amor.set_packmol_params = ab.packmol_params(
                         nloop=self._packmol_nloop,
                         precision=self._packmol_precision)
