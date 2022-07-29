@@ -39,7 +39,7 @@ The key properties are:
 - **Solvent diffusivity** - [[Guide](http://polymer-molecular-dynamics.netlify.app/docs/guides/solvent-diffusivity)] [[Scripts](https://github.com/Ramprasad-Group/Polymer-Molecular-Dynamics/tree/main/scripts/Solvent_diffusivity)]
 - **Viscosity** - [[Guide](https://polymer-molecular-dynamics.netlify.app/docs/guides/viscosity)] [[Scripts](https://github.com/Ramprasad-Group/Polymer-Molecular-Dynamics/tree/main/scripts/Shear_deformation)]
 - **Young's modulus** and **tensile strengths** - [[Guide](https://polymer-molecular-dynamics.netlify.app/docs/guides/mechanical-properties)] [[Scripts](https://github.com/Ramprasad-Group/Polymer-Molecular-Dynamics/tree/main/scripts/Tensile_deformation)]
-- **Thermal conductivity** - In-progress
+- **Thermal conductivity** - [[Scripts](https://github.com/Ramprasad-Group/Polymer-Molecular-Dynamics/tree/main/scripts/HeatFluxMeasurement)]
 - **Solubility** - Planned
 - **Melting temperature (Tm)** - Planned
 
