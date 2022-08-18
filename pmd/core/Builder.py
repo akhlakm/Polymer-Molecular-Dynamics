@@ -1,4 +1,5 @@
 import os
+import re
 import shutil
 from io import TextIOWrapper
 from typing import Optional, Tuple
@@ -283,7 +284,9 @@ class PSP(Builder):
 
     @staticmethod
     def _add_brackets_to_asterisks(smiles: str) -> str:
-        smiles = smiles.replace('*', '[*]')
+        stars_no_bracket = re.findall(r'(?<!\[)\*(?!\])', smiles)
+        if len(stars_no_bracket) == 2:
+            smiles = smiles.replace("*", "[*]")
         return smiles
 
     def _is_opls_force_field(self) -> bool:
