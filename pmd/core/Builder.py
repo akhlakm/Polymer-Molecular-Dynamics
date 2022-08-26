@@ -333,7 +333,8 @@ class PSP(Builder):
             if cleanup:
                 force_field_dname = 'ligpargen' if self._is_opls_force_field(
                 ) else 'pysimm'
-                dnames = ['chain_models', 'packmol'].append(force_field_dname)
+                dnames = ['chain_models', 'packmol']
+                dnames.append(force_field_dname)
                 for dir in dnames:
                     dir_path = os.path.join(output_dir, dir)
                     if os.path.isdir(dir_path):
