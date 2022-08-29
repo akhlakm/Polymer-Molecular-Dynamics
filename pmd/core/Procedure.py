@@ -186,9 +186,11 @@ class Equilibration(Procedure):
             f.write(f'{"fix":<15} fLANGEVIN all langevin '
                     f'{self._Tmax} {self._Tmax} {self._Tdamp} 723853\n')
             f.write(f'{"fix":<15} fNVELIMIT all nve/limit 0.1\n')
+            f.write(f'{"fix":<15} fMOM all momentum 100 linear 1 1 1 angular')
             f.write(f'{"run":<15} 10000\n')
             f.write(f'{"unfix":<15} fLANGEVIN\n')
             f.write(f'{"unfix":<15} fNVELIMIT\n')
+            f.write(f'{"unfix":<15} fMOM\n')
             f.write(f'{"reset_timestep":<15} 0\n')
             f.write('\n')
 
