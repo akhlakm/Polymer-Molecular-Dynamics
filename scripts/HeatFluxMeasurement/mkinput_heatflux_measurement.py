@@ -28,6 +28,6 @@ if __name__ == '__main__':
                      ppn=24,
                      walltime='24:00:00')
 
-    # Create all the files in the PE_equilibration folder
+    # Create all the files in the PE_heatflux_measurement folder
     run = pmd.Pmd(system=system, lammps=lmp, job=job)
     run.create(output_dir='PE_heatflux_measurement', save_config=True)

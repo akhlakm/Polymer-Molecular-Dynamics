@@ -1,9 +1,9 @@
 import sys
 
 from .core import (EMC, NPT, NVT, PSP, Equilibration, HeatFluxMeasurement,
-                   Lammps, Minimization, MSDMeasurement, Pmd, ShearDeformation,
-                   Slurm, SolventSystem, System, TensileDeformation,
-                   TgMeasurement, Torque)
+                   Lammps, Minimization, MSDMeasurement, Pmd, RgMeasurement,
+                   ShearDeformation, Slurm, SolventSystem, System,
+                   TensileDeformation, TgMeasurement, Torque)
 from .postprocessing import (calculate_diffusivity, calculate_Tg,
                              read_lammpstrj, read_lammpstrj_by_type)
 
@@ -22,7 +22,7 @@ finally:
 
 __all__ = [
     Lammps, Pmd, Torque, Slurm, System, SolventSystem, EMC, PSP, Minimization,
-    Equilibration, TgMeasurement, MSDMeasurement, TensileDeformation,
-    ShearDeformation, HeatFluxMeasurement, NVT, NPT, calculate_diffusivity,
-    calculate_Tg, read_lammpstrj, read_lammpstrj_by_type
+    Equilibration, RgMeasurement, TgMeasurement, MSDMeasurement,
+    TensileDeformation, ShearDeformation, HeatFluxMeasurement, NVT, NPT,
+    calculate_diffusivity, calculate_Tg, read_lammpstrj, read_lammpstrj_by_type
 ]

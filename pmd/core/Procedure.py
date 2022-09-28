@@ -906,7 +906,7 @@ class RgMeasurement(Procedure):
         f.write('\n')
 
         f.write(f'{"compute":<15} {rg_chunk_id} {rg_group_id} '
-                f'gyration/chunk {mol_chunk_id}\n  # Rg of each molecule')
+                f'gyration/chunk {mol_chunk_id}  # Rg of each molecule\n')
         f.write(f'{"variable":<15} Rg equal ave(c_{rg_chunk_id}  '
                 '# average Rg of all molecules\n')
         f.write(
