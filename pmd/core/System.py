@@ -285,6 +285,10 @@ class SolventSystem(System):
     def solvent_group(self):
         return f'molecule <= {self._nsolvents}'
 
+    @property
+    def polymer_group(self):
+        return f'molecule > {self._nsolvents}'
+
     def _calculate_system_spec(self) -> None:
         natoms_per_RU, natoms_end_cap = self._calculate_polymer_spec()
 

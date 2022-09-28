@@ -133,7 +133,6 @@ undump          dump_Equilibration
 
 
 ### TgMeasurement
-
 dump            dump_TgMeasurement all custom 10000 Tg_measurement.lammpstrj id mol type q xs ys zs ix iy iz
 restart         26000000 TgMeasurement.restart
 
