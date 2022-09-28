@@ -321,10 +321,12 @@ class NVT(Procedure):
 
 
 class MSDMeasurement(Procedure):
-    '''Perform the simulation under NVT ensemble (via Nose-Hoover thermostat).
+    '''Perform mean-squared displacement measurement for the specified group
+    of atmos/molecules.
 
     Attributes:
-        duration (int): Duration of this NVT procedure (timestep unit)
+        duration (int): Duration of the NVT ensemble for MSD measurement 
+            (timestep unit)
 
         T (float): Temperature
 
@@ -822,4 +824,99 @@ class HeatFluxMeasurement(Procedure):
         f.write('\n')
         f.write(f'{"unfix":<15} fNVT\n')
         f.write(f'{"unfix":<15} JJ\n')
+        f.write('\n')
+
+
+class RgMeasurement(Procedure):
+    '''Perform radius of gyration measurement for the specified group of
+    molecules under a NPT ensemble.
+
+    Attributes:
+        duration (int): Duration of this procedure (timestep unit)
+
+        T (float): Temperature
+
+        P (float): Pressure
+
+        group (str): The group of atoms that will be considered for MSD
+            calculation. This has to be a string that matches the syntax of
+            [group](https://docs.lammps.org/group.html) LAMMPS command
+            (e.g. `"molecule <=50"`, `"type 1 2"`, etc
+
+        result_fname (str): Name of the result file; default:
+            `"Rg_results.txt"`
+
+        calculate_every (int): Calculate result every this many
+            timesteps; default: `100000`
+
+        Tdamp (str): Damping parameter for thermostats; default:
+            `"$(100.0*dt)"`
+
+        Pdamp (str): Damping parameter for thermostats; default:
+            `"$(100.0*dt)"`
+
+        dump_fname (str): Name of the dump file; default:
+            `"Rg_Measurement.lammpstrj"`
+
+        dump_every (int): Dump every this many timesteps; default: `10000`
+
+        dump_image (bool): Whether to dump a image file at the end of the run
+            ; default: `False`
+
+        reset_timestep_before_run (bool): Whether to reset timestep after the
+            procedure; default: `False`
+    '''
+
+    def __init__(self,
+                 duration: int,
+                 T: float,
+                 P: float,
+                 group: str,
+                 result_fname: str = 'Rg_results.txt',
+                 calculate_every: int = 100000,
+                 Tdamp: str = '$(100.0*dt)',
+                 Pdamp: str = '$(100.0*dt)',
+                 dump_fname: str = 'Rg_Measurement.lammpstrj',
+                 dump_every: int = 10000,
+                 dump_image: bool = False,
+                 reset_timestep_before_run: bool = False):
+
+        self._T = T
+        self._P = P
+        self._group = group
+        self._result_fname = result_fname
+        self._calculate_every = calculate_every
+        self._Tdamp = Tdamp
+        self._Pdamp = Pdamp
+
+        super().__init__(duration, dump_fname, dump_every, dump_image,
+                         reset_timestep_before_run)
+
+    def write_lammps(self, f: TextIOWrapper):
+        f.write(f'{"fix":<15} fNPT all npt temp {self._T} {self._T} '
+                f'{self._Tdamp} iso {self._P} {self._P} {self._Pdamp}\n')
+        f.write('\n')
+
+        rg_group_id = 'rggroup'
+        mol_chunk_id = 'molchunk'
+        rg_chunk_id = 'rgchunk'
+        f.write(f'{"group":<15} {rg_group_id} {self._group}\n')
+        f.write(f'{"compute":<15} {mol_chunk_id} {rg_group_id} '
+                f'chunk/atom molecule\n')
+        f.write('\n')
+
+        f.write(f'{"compute":<15} {rg_chunk_id} {rg_group_id} '
+                f'gyration/chunk {mol_chunk_id}\n  # Rg of each molecule')
+        f.write(f'{"variable":<15} Rg equal ave(c_{rg_chunk_id}  '
+                '# average Rg of all molecules\n')
+        f.write(
+            f'{"fix":<15} fAVETIME {rg_group_id} ave/time '
+            f'100 {self._calculate_every/100} {self._calculate_every} v_Rg '
+            f'ave one file {self._result_fname}\n')
+        f.write(f'{"run":<15} {self._duration}\n')
+        f.write('\n')
+
+        f.write('\n')
+        f.write(f'{"unfix":<15} fNPT\n')
+        f.write(f'{"unfix":<15} fAVETIME\n')
         f.write('\n')
