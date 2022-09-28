@@ -325,7 +325,7 @@ class MSDMeasurement(Procedure):
     of atmos/molecules.
 
     Attributes:
-        duration (int): Duration of the NVT ensemble for MSD measurement 
+        duration (int): Duration of the NVT ensemble for MSD measurement
             (timestep unit)
 
         T (float): Temperature
