@@ -599,13 +599,13 @@ class TensileDeformation(Procedure):
         # Output strain and stress info to file for units real,
         # pressure is in [atm] = 0.101325 [MPa]
         # and p2, p3, p4 are in MPa
-        f.write(f'{"variable":<15} p2 equal "-pxx*0.101325 '
-                '# convert stress unit from atm to MPa"\n')
+        f.write(f'{"variable":<15} p2 equal "-pxx*0.101325" '
+                '# convert stress unit from atm to MPa\n')
         f.write(f'{"variable":<15} p3 equal "-pyy*0.101325"\n')
         f.write(f'{"variable":<15} p4 equal "-pzz*0.101325"\n')
-        f.write(f'{"fix":<15} fPRINT all print {self._print_every} '
-                '"${p1} ${p2} ${p3} ${p4}" file '
-                f'{self._result_fname} screen no\n')
+        f.write(f'{"fix":<15} fAVETIME all ave/time 100 {self._print_every} '
+                f'{100*self._print_every} v_p1 v_p2 ave one file '
+                f'{self._result_fname}\n')
         # override the default thermo_style
         f.write(f'{"thermo_style":<15} custom step temp density vol v_strain '
                 'v_p2 v_p3 v_p4 press ke pe\n')
@@ -613,7 +613,7 @@ class TensileDeformation(Procedure):
         f.write('\n')
         f.write(f'{"unfix":<15} fNPT\n')
         f.write(f'{"unfix":<15} fDEFORM\n')
-        f.write(f'{"unfix":<15} fPRINT\n')
+        f.write(f'{"unfix":<15} fAVETIME\n')
         f.write('\n')
 
 
