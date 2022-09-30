@@ -15,9 +15,7 @@ if __name__ == '__main__':
     lmp = pmd.Lammps(read_data_from=system)
     lmp.add_procedure(pmd.Minimization())
     lmp.add_procedure(
-        pmd.NPT(duration=5 * 10**7, Tinit=300, Tfinal=300, Pinit=1, Pfinal=1))
-    lmp.add_procedure(
-        pmd.RgMeasurement(duration=5 * 10**7,
+        pmd.RgMeasurement(duration=2 * 10**7,
                           T=300,
                           P=1,
                           group=system.polymer_group,
@@ -30,7 +28,7 @@ if __name__ == '__main__':
                      project='GT-rramprasad3-CODA20',
                      nodes=2,
                      ppn=24,
-                     walltime='24:00:00')
+                     walltime='12:00:00')
 
     # Create all the files in the PE_in_CO_Rg_measurement folder
     run = pmd.Pmd(system=system, lammps=lmp, job=job)
