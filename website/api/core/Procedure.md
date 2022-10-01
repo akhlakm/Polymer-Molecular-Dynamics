@@ -145,11 +145,13 @@ Perform the simulation under NVT ensemble (via Nose-Hoover thermostat).
 class MSDMeasurement(Procedure)
 ```
 
-Perform the simulation under NVT ensemble (via Nose-Hoover thermostat).
+Perform mean-squared displacement measurement for the specified group
+of atmos/molecules.
 
 **Attributes**:
 
-- `duration` _int_ - Duration of this NVT procedure (timestep unit)
+- `duration` _int_ - Duration of the NVT ensemble for MSD measurement
+  (timestep unit)
   
 - `T` _float_ - Temperature
   
@@ -332,4 +334,49 @@ using the equilibrium Green-Kubo formalism.
   procedure; default: `False`
   
 - `result_fname` _str_ - Name of the result file; default: `"J0Jt.txt"`
+
+## RgMeasurement Objects
+
+```python
+class RgMeasurement(Procedure)
+```
+
+Perform radius of gyration measurement for the specified group of
+molecules under a NPT ensemble.
+
+**Attributes**:
+
+- `duration` _int_ - Duration of this procedure (timestep unit)
+  
+- `T` _float_ - Temperature
+  
+- `P` _float_ - Pressure
+  
+- `group` _str_ - The group of atoms that will be considered for MSD
+  calculation. This has to be a string that matches the syntax of
+  [group](https://docs.lammps.org/group.html) LAMMPS command
+  (e.g. `"molecule <=50"`, `"type 1 2"`, etc
+  
+- `result_fname` _str_ - Name of the result file; default:
+  `"Rg_results.txt"`
+  
+- `calculate_every` _int_ - Calculate result every this many
+  timesteps; default: `100000`
+  
+- `Tdamp` _str_ - Damping parameter for thermostats; default:
+  `"$(100.0*dt)"`
+  
+- `Pdamp` _str_ - Damping parameter for thermostats; default:
+  `"$(100.0*dt)"`
+  
+- `dump_fname` _str_ - Name of the dump file; default:
+  `"Rg_Measurement.lammpstrj"`
+  
+- `dump_every` _int_ - Dump every this many timesteps; default: `10000`
+  
+- `dump_image` _bool_ - Whether to dump a image file at the end of the run
+  ; default: `False`
+  
+- `reset_timestep_before_run` _bool_ - Whether to reset timestep after the
+  procedure; default: `False`
 
