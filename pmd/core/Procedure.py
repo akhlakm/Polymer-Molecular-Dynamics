@@ -911,8 +911,8 @@ class RgMeasurement(Procedure):
                 '# average Rg of all molecules\n')
         f.write(
             f'{"fix":<15} fAVETIME {rg_group_id} ave/time '
-            f'100 {self._calculate_every/100} {self._calculate_every} v_Rg '
-            f'ave one file {self._result_fname}\n')
+            f'100 {int(self._calculate_every/100)} {self._calculate_every} '
+            f'v_Rg ave one file {self._result_fname}\n')
         f.write(f'{"run":<15} {self._duration}\n')
         f.write('\n')
 
