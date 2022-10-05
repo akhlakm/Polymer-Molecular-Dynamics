@@ -5,7 +5,7 @@ if __name__ == '__main__':
     system = pmd.SolventSystem(smiles='*CC*',
                                solvent_smiles='CO',
                                ru_nsolvent_ratio=float(500 / 50),
-                               density=0.5,
+                               density=0.85,
                                nchains_total=1,
                                ru_per_chain=50,
                                builder=pmd.EMC(force_field='pcff'))
@@ -14,6 +14,11 @@ if __name__ == '__main__':
     # (will output Rg result at the end)
     lmp = pmd.Lammps(read_data_from=system)
     lmp.add_procedure(pmd.Minimization())
+    lmp.add_procedure(
+        pmd.NVT(duration=10**6,
+                Tinit=300,
+                Tfinal=300,
+                reset_timestep_before_run=True))
     lmp.add_procedure(
         pmd.RgMeasurement(duration=2 * 10**7,
                           T=300,
@@ -28,7 +33,7 @@ if __name__ == '__main__':
                      project='GT-rramprasad3-CODA20',
                      nodes=2,
                      ppn=24,
-                     walltime='12:00:00')
+                     walltime='24:00:00')
 
     # Create all the files in the PE_in_CO_Rg_measurement folder
     run = pmd.Pmd(system=system, lammps=lmp, job=job)

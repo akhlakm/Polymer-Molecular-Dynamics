@@ -898,21 +898,24 @@ class RgMeasurement(Procedure):
         f.write('\n')
 
         rg_group_id = 'rggroup'
-        mol_chunk_id = 'molchunk'
-        rg_chunk_id = 'rgchunk'
         f.write(f'{"group":<15} {rg_group_id} {self._group}\n')
-        f.write(f'{"compute":<15} {mol_chunk_id} {rg_group_id} '
-                f'chunk/atom molecule\n')
-        f.write('\n')
+        # TODO: make the mol chunk work for Rg calculation, currently,
+        # this only works for the single polymer case
+        # mol_chunk_id = 'molchunk'
+        # rg_chunk_id = 'rgchunk'
+        # f.write(f'{"compute":<15} {mol_chunk_id} {rg_group_id} '
+        #         f'chunk/atom molecule\n')
+        # f.write('\n')
 
-        f.write(f'{"compute":<15} {rg_chunk_id} {rg_group_id} '
-                f'gyration/chunk {mol_chunk_id}  # Rg of each molecule\n')
-        f.write(f'{"variable":<15} Rg equal ave(c_{rg_chunk_id})  '
-                '# average Rg of all molecules\n')
+        # f.write(f'{"compute":<15} {rg_chunk_id} {rg_group_id} '
+        #         f'gyration/chunk {mol_chunk_id}  # Rg of each molecule\n')
+        # f.write(f'{"variable":<15} Rg equal ave(c_{rg_chunk_id})  '
+        #         '# average Rg of all molecules\n')
+        f.write(f'{"compute":<15} Rg {rg_group_id} gyration\n')
         f.write(
             f'{"fix":<15} fAVETIME {rg_group_id} ave/time '
             f'100 {int(self._calculate_every/100)} {self._calculate_every} '
-            f'v_Rg ave one file {self._result_fname}\n')
+            f'c_Rg ave one file {self._result_fname}\n')
         f.write(f'{"run":<15} {self._duration}\n')
         f.write('\n')
 
