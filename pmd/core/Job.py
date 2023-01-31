@@ -112,6 +112,7 @@ class Slurm(Job):
     def __init__(self,
                  run_lammps: Lammps,
                  jobname: str,
+                 project: str,
                  nodes: int,
                  ntasks_per_node: int,
                  time: str,
@@ -136,21 +137,28 @@ class Slurm(Job):
         '''
         with open(os.path.join(output_dir, self._job_fname), 'w') as f:
             f.write('#!/bin/bash')
-            f.write(f'#SBATCH --job-name={self._jobname}\n')
-            f.write('#SBATCH -o out.o%j\n')
-            f.write('#SBATCH -e err.e%j\n')
-            f.write(f'#SBATCH --nodes={self._nodes}\n')
+            f.write(f'#SBATCH -J{self._jobname}\n')
+            f.write(f'#SBATCH -A {self._project}\n')
+
             if self._gpus:
                 f.write(f'#SBATCH --gpus={self._gpus}\n')
             else:
                 f.write(
-                    f'#SBATCH --ntasks-per-node={ self._ntasks_per_node}\n')
-            f.write(f'#SBATCH --time={self._time}\n')
+                    f'#SBATCH -N {self._nodes}')
+
+                f.write(
+                    f' --ntasks-per-node={ self._ntasks_per_node}\n')
+            f.write(f'#SBATCH --mem-per-cpu=2G\n')            
+            f.write(f'#SBATCH --time={self._time}\n')            
+            f.write('#SBATCH -qinferno\n')
+            f.write('#SBATCH -o %j.out\n')
+            f.write('cd $SLURM_SUBMIT_DIR\n')
+
             if self._gpus:
                 # TODO
                 print('Have not implemented GPU Slurm yet')
             else:
-                f.write('module load intel/18.0.2 impi/18.0.2 lammps/9Jan20\n')
-                f.write(f'ibrun lmp -in {self._run_lammps}\n')
+                f.write('module load iintel/20.0.4 mvapich2/2.3.6-z2duuy\n')
+                f.write(f'srun -n { self._nodes * self._ppn} lmp -in {self._run_lammps}\n')
 
         super().completion_log(output_dir)
