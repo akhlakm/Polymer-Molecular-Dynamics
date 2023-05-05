@@ -104,6 +104,7 @@ class Slurm(Job):
         jobname (str): Job name
         nodes (int): Number of nodes
         ntasks_per_node (int): Number of processors (CPU)
+        mem_per_cpu (int): Memory per CPU
         time (str): Job time
         gpus (int): Number of processors (GPU)
         job_fname (str): Name of the Slurm input file; default: `"job.sh"`
@@ -116,6 +117,7 @@ class Slurm(Job):
                  nodes: int,
                  ntasks_per_node: int,
                  time: str,
+                 mem_per_cpu: int = 2,
                  gpus: int = 0,
                  job_fname: str = 'job.sh'):
 
@@ -124,6 +126,8 @@ class Slurm(Job):
         self._ntasks_per_node = ntasks_per_node
         self._time = time
         self._gpus = gpus
+        self._mem_per_cpu = mem_per_cpu
+        self._project = project
 
     @build_dir
     def write_job(self, output_dir: str = '.') -> None:
@@ -148,17 +152,17 @@ class Slurm(Job):
 
                 f.write(
                     f' --ntasks-per-node={ self._ntasks_per_node}\n')
-            f.write(f'#SBATCH --mem-per-cpu=2G\n')            
+            
+            f.write(f'#SBATCH --mem-per-cpu={ self._mem_per_cpu}G\n')            
             f.write(f'#SBATCH --time={self._time}\n')            
             f.write('#SBATCH -qinferno\n')
             f.write('#SBATCH -o %j.out\n')
-            f.write('cd $SLURM_SUBMIT_DIR\n')
 
             if self._gpus:
                 # TODO
                 print('Have not implemented GPU Slurm yet')
             else:
-                f.write('module load iintel/20.0.4 mvapich2/2.3.6-z2duuy\n')
-                f.write(f'srun -n { self._nodes * self._ppn} lmp -in {self._run_lammps}\n')
+                f.write('module load intel/20.0.4 mvapich2/2.3.6-z2duuy lammps/20220107-mva2-dukitd\n')
+                f.write(f'srun -n {self._nodes * self._ppn} lmp -in {self._run_lammps}\n')
 
         super().completion_log(output_dir)
