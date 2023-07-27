@@ -36,9 +36,13 @@ restart         1560000 Equilibration.restart
 
 fix             fLANGEVIN all langevin 800 800 $(100.0*dt) 723853
 fix             fNVELIMIT all nve/limit 0.1
+fix             fMOM all momentum 100 linear 1 1 1 angular
 run             10000
+
 unfix           fLANGEVIN
 unfix           fNVELIMIT
+unfix           fMOM
+
 reset_timestep  0
 
 fix             step1 all nvt temp 800 800 $(100.0*dt)
@@ -141,15 +145,15 @@ variable        tmp equal "lx"
 variable        L0 equal ${tmp}
 variable        strain equal "(lx - v_L0)/v_L0"
 variable        p1 equal "v_strain"
-variable        p2 equal "-pxx*0.101325 # convert stress unit from atm to MPa"
+variable        p2 equal "-pxx*0.101325" # convert stress unit from atm to MPa
 variable        p3 equal "-pyy*0.101325"
 variable        p4 equal "-pzz*0.101325"
-fix             fPRINT all print 1000 "${p1} ${p2} ${p3} ${p4}" file stress_vs_strain.txt screen no
+fix             fAVETIME all ave/time 100 1000 100000 v_p1 v_p2 ave one file stress_vs_strain.txt
 thermo_style    custom step temp density vol v_strain v_p2 v_p3 v_p4 press ke pe
 run             10000000
 
 unfix           fNPT
 unfix           fDEFORM
-unfix           fPRINT
+unfix           fAVETIME
 
 undump          dump_TensileDeformation

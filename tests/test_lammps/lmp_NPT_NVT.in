@@ -36,9 +36,13 @@ restart         1560000 Equilibration.restart
 
 fix             fLANGEVIN all langevin 800 800 $(100.0*dt) 723853
 fix             fNVELIMIT all nve/limit 0.1
+fix             fMOM all momentum 100 linear 1 1 1 angular
 run             10000
+
 unfix           fLANGEVIN
 unfix           fNVELIMIT
+unfix           fMOM
+
 reset_timestep  0
 
 fix             step1 all nvt temp 800 800 $(100.0*dt)
@@ -129,7 +133,6 @@ undump          dump_Equilibration
 
 
 ### NPT
-
 dump            dump_NPT all custom 10000 npt.lammpstrj id mol type q xs ys zs ix iy iz
 restart         10000000 NPT.restart
 
@@ -141,7 +144,6 @@ undump          dump_NPT
 
 
 ### NVT
-
 dump            dump_NVT all custom 10000 nvt.lammpstrj id mol type q xs ys zs ix iy iz
 restart         100000000 NVT.restart
 
