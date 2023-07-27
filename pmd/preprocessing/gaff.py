@@ -1,3 +1,26 @@
+"""
+Create a polymer system with GAFF2 as force field using the following steps:
+
+    - Build a small 1 chain system with OPLS-AA force field using EMC.
+    - Calculate AM1-BCC and GAFF2 atom types of the chain with Ambertools.
+    - Create a mapping between the OPLS and GAFF2 atom types with openmol.
+    - Build the target larger polymer system using EMC.
+    - Using the mapping, convert the atom types and charges to GAFF2 types.
+    - Build the polymer system using Ambertools.
+    - Convert the Amber built system into LAMMPS data.
+
+Requirements:
+    - EMC from https://montecarlo.sourceforge.net/
+    - emc-pypi from pip
+    - Ambertools from conda-forge
+    - OpenMol from pip
+
+    
+Author: Akhlak Mahmood
+Version: 2023-07-23
+
+"""
+
 import os
 import shutil
 
@@ -49,6 +72,7 @@ class GAFF2:
 
     def create_system(self, smiles, density, natoms_total, length,
                       nchains, end_cap_smiles, cleanup=True):
+        """ Create polymer system with GAFF2 using a FF mapping. """
 
         os.makedirs(self.temp_dir, exist_ok=True)
         emc_prefix = "system."
@@ -78,6 +102,7 @@ class GAFF2:
             raise RuntimeError("Failed to generate single chain.")
 
     def _extract_emc(self):
+        """ Extract gzip compressed EMC PDB and PSF files. """
         input_pdb = os.path.join(self.temp_dir, "system.pdb.gz")
         input_psf = os.path.join(self.temp_dir, "system.psf.gz")
         if os.path.isfile(input_pdb):
@@ -127,6 +152,7 @@ class GAFF2:
 
 
     def _check_antechamber(self):
+        """ Check if antechamber/ambertools are available. """
         antechamber = execute_command("antechamber -h").returncode == 0
         if not antechamber:
             raise RuntimeError("AnteChamber not installed. "\
@@ -135,6 +161,7 @@ class GAFF2:
 
 
     def _check_tleap(self):
+        """ Check if tleap/ambertools are available. """
         tleap = execute_command("tleap -h").returncode == 0
         if not tleap:
             raise RuntimeError("tleap not installed. "\
@@ -231,6 +258,7 @@ class GAFF2:
 
 
     def _build_amber_system(self, emc_prefix):
+        """ Build Amber simulation files from a MOL2 file. """
         input_mol2 = emc_prefix+"gaff2.mol2"
         input_leap = emc_prefix+'gaff2.tleap'
         out_prmtop = emc_prefix+"gaff2.prmtop"
@@ -250,6 +278,10 @@ class GAFF2:
 
         cmd = f"tleap -f {input_leap}"
 
+        # Note!! EMC does not wrap the polymer chains.
+        # This will create a huge box. We will manually set boxsize
+        # during coversion to LAMMPS data.
+
         Pmdlogging.info('Running tleap. This may take a while ...')
         res = execute_command(cmd, capture=False)
 
@@ -265,7 +297,32 @@ class GAFF2:
         os.chdir(prev_wd)
 
 
+    def _update_box_from_emc(self, mol : openmol.AttrDict):
+        """ Update the box information of the OpenMol object from EMC PDB. """
+        emc_pdb = os.path.join(self.temp_dir, "system.pdb")
+        # Read the emc pdb file to parse boxsize.
+        # CRYST1  41.2179  41.2179  41.2179     90     90     90 P 1          1
+        with open(emc_pdb) as fp:
+            for line in fp:
+                if "CRYST1" in line:
+                    break
+
+        if "CRYST1" not in line:
+            raise ValueError("No box information found in EMC PDB.")
+        
+        words = line.split()
+        mol['box_x'] = float(words[1])
+        mol['box_y'] = float(words[2])
+        mol['box_z'] = float(words[2])
+        mol['box_almolha'] = float(words[4])
+        mol['box_beta'] = float(words[5])
+        mol['box_gamma'] = float(words[6])
+
+        return mol
+
+
     def _write_lammps_data(self, emc_prefix):
+        """ Convert amber simulation files into lammps data using OpenMol. """
         prmtop = os.path.join(self.temp_dir, emc_prefix+"gaff2.prmtop")
         restrt = os.path.join(self.temp_dir, emc_prefix+"gaff2.rst7")
 
@@ -281,12 +338,17 @@ class GAFF2:
         # set title
         p.title = f"Polymer System with GAFF2"
 
+        # use original emc box info
+        p = self._update_box_from_emc(p)
+
         # write lammps data file
         lmp = openmol.lammps_full.Writer(p, self.lammps_data)
         lmp.write()
 
 
 if __name__ == "__main__":
+    # Test environment, if executed directly.
+
     gaff = GAFF2(working_dir="gaff_tests")
     gaff.load_or_create_mapping("[*]CC[*]", "*C", cleanup=True)
     gaff.create_system(smiles='*CC*', density=1.0, end_cap_smiles="*C",
