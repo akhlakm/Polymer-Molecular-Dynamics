@@ -8,10 +8,8 @@ import numpy as np
 import pandas as pd
 import pyemc
 
-import openmol.lammps_full
-import openmol.tripos_mol2
-
 from pmd.util import HiddenPrints, Pmdlogging, build_dir, execute_command
+# from pmd.preprocessing.gaff import GAFF2
 
 PSP_FORCE_FIELD_OPTIONS = ('opls-lbcc', 'opls-cm1a', 'gaff2-gasteiger',
                            'gaff2-am1bcc')
@@ -169,6 +167,9 @@ class EMC(Builder):
             f.write(f'field {self._force_field}\n')
             f.write(f'density {density}\n')
             f.write(f'ntotal {natoms_total}\n')
+            f.write(f'pdb_compress false\n')
+            f.write(f'pdb_connect true\n')
+            f.write(f'pdb_unwrap none\n')
             f.write('ITEM END\n')
             f.write('\n')
             f.write('ITEM GROUPS\n')
@@ -430,19 +431,6 @@ class OpenMol(Builder):
         self._force_field = 'gaff2'
         self._emc_force_field = 'pcff'
 
-        if execute_command("antechamber -h").returncode:
-            raise RuntimeError("AnteChamber not installed. "\
-                    "Please install ambertools using conda. "\
-                    "conda install -c conda-forge ambertools ")
-
-
-        if execute_command("gzip --version").returncode:
-            raise RuntimeError("gzip not installed. "\
-                    "Please install ambertools using conda. "\
-                    "conda install -c conda-forge ambertools ")
-
-        #@todo: check if EMC is correctly installed.
-
 
     @build_dir
     def write_data(self, output_dir: str, smiles: str, density: float,
@@ -462,8 +450,8 @@ class OpenMol(Builder):
                        cleanup=True)
 
         # Use openmol and antechamber to generate GAFF2 files
-        self._generate_amber_ff(output_dir, smiles, end_cap_smiles, tmp_prefix,
-                                cleanup)
+        gaff = GAFF2(output_dir)
+        gaff.load_or_create_mapping(smiles, end_cap_smiles, cleanup=cleanup)
 
         # - Use openmol to build final lammps data file
         self._make_lammps_data(tmp_prefix, output_dir, data_fname, cleanup)
@@ -476,76 +464,6 @@ class OpenMol(Builder):
     def _remove_brackets_around_asterisks(smiles: str) -> str:
         smiles = smiles.replace('[*]', '*')
         return smiles
-
-    def _generate_amber_ff(self, output_dir, smiles, end_cap_smiles, tmp_prefix,
-                           cleanup):
-
-        emc_data_file = tmp_prefix + ".1chain.data"
-        opnmol_mol2_file = tmp_prefix + ".1chain.mol2"
-        antech_mol2_file = "gaff.1chain.mol2"
-
-        # - Generate a smaller configuration of the system using EMC.
-        emc = EMC('pcff')
-        emc.write_data(output_dir, smiles, 1.0, 100, 10,
-                       1, end_cap_smiles, emc_data_file, cleanup=False)
-
-        previous_dir = os.getcwd()
-        os.chdir(output_dir)
-
-        if not os.path.isfile(emc_data_file):
-            Pmdlogging.error("EMC small chain generation failed.")
-            return
-
-        reader = openmol.lammps_full.Reader()
-        reader.read(emc_data_file)
-
-        # Make sure there is only one chain
-        if max(reader.Mol.atom_resid) > 0:
-            Pmdlogging.error("Multiple molecules found in the EMC chain.")
-            Pmdlogging.error("Antechamber requires a single chain.")
-            return
-
-        # Update atom names
-        rename_map = { 'c' : 'C', 'hc': 'H', 'o': 'O' }
-        reader.Mol.atom_name = [
-            rename_map[n] for n in reader.Mol.atom_name if n in rename_map]
-
-        # Save as a Mol2 file for antechamber
-        system = openmol.tripos_mol2.build(reader.Mol)
-        writer = openmol.tripos_mol2.Writer(system, opnmol_mol2_file)
-        writer.write()
-        Pmdlogging.info('Converted to MOL2 file.')
-
-        if not self._run_antechamber(output_dir,
-                                     opnmol_mol2_file,
-                                     antech_mol2_file, cleanup):
-            return False
-
-        # Extract the atom types and charges from the generated mol2 file
-        system = openmol.tripos_mol2.read(antech_mol2_file)
-        print(system)
-
-        # Update the original system with the values.
-
-
-    def _check_antechamber(self):
-        return execute_command("antechamber -h").returncode == 0
-
-    def _run_antechamber(self, output_dir, in_mol2, out_mol2, cleanup):
-        """ Run antechamber, return true on success. """
-        cmd = f"antechamber -i {in_mol2} -fi mol2 " \
-              f"-o {out_mol2} -fo mol2 " \
-              f"-c bcc -rn POL -at gaff2 -s 0 -pl -1 " \
-              f"-pf {'y' if cleanup else 'n'}"
-
-        Pmdlogging.info('Running antechamber. This may take a while ...')
-        res = execute_command(cmd, capture=False)
-
-        if res.returncode != 0:
-            Pmdlogging.error("Antechamber failed.")
-            return False
-        
-        return True
 
 
     def _make_lammps_data(self, tmp_prefix, output_dir, data_fname, cleanup):
