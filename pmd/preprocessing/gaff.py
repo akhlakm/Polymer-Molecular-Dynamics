@@ -1,21 +1,18 @@
 """
 Create a polymer system with GAFF2 as force field using the following steps:
-
-    - Build a small 1 chain system with OPLS-AA force field using EMC.
-    - Calculate AM1-BCC and GAFF2 atom types of the chain with Ambertools.
-    - Create a mapping between the OPLS and GAFF2 atom types with openmol.
-    - Build the target larger polymer system using EMC.
-    - Using the mapping, convert the atom types and charges to GAFF2 types.
-    - Build the polymer system using Ambertools.
-    - Convert the Amber built system into LAMMPS data.
+- Build a small 1 chain system with OPLS-AA force field using EMC.
+- Calculate AM1-BCC and GAFF2 atom types of the chain with AnteChamber.
+- Create a mapping between the OPLS and GAFF2 atom types with OpenMol.
+- Build the target larger polymer system using EMC.
+- Using the mapping, convert the atom types and charges to GAFF2 types.
+- Build the polymer system using tLeap for Amber.
+- Convert the Amber system into LAMMPS data using OpenMol.
 
 Requirements:
-    - EMC from https://montecarlo.sourceforge.net/
-    - emc-pypi from pip
-    - Ambertools from conda-forge
-    - OpenMol from pip
-
-    
+- emc-pypi (pip install emc-pypi)
+- Ambertools (conda install -c conda-forge ambertools)
+- OpenMol  (pip install openmol >= 1.2.1)
+   
 Author: Akhlak Mahmood
 Version: 2023-07-23
 
@@ -24,47 +21,50 @@ Version: 2023-07-23
 import os
 import shutil
 
-import openmol
-import openmol.psf
-import openmol.mapping
 import openmol.tripos_mol2
 import openmol.amber_parm7
 import openmol.lammps_full
 
-
-from pmd.core.Builder import EMC
 from pmd.util import Pmdlogging
-from pmd.preprocessing.utils import execute_command, extract_gzip
+from pmd.preprocessing.emc import EMCTool
+from pmd.preprocessing.amber import AmberTool
+from pmd.preprocessing.maps import EMC2GAFF
+
 
 
 class GAFF2:
     def __init__(self, working_dir : str = ".", data_fname : str = "data.lmps"):
-        self.mapping = None
         self.emc_ff = "opls-aa"
         self.work_dir = working_dir
         self.temp_dir = os.path.join(self.work_dir, "_gaff")
+        self.mapping = EMC2GAFF(self.emc_ff, self.temp_dir)
         self.map_file = os.path.join(self.work_dir, self.emc_ff+"2gaff.map")
         self.lammps_data = os.path.join(self.work_dir, data_fname)
+
 
     def load_or_create_mapping(self, smiles, end_cap_smiles,
                                cleanup : bool = False):
         """ Load or create a new force field mapping file for GAFF2. """
         if os.path.isfile(self.map_file):
-            self.mapping = openmol.mapping.FFMap(self.emc_ff, "gaff2")
             self.mapping.load_mapping(self.map_file)
-
         else:
             emc_prefix = "1chain"
-            self._check_antechamber()
             os.makedirs(self.temp_dir, exist_ok=True)
 
-            self._create_chain(smiles, end_cap_smiles, emc_prefix)
-            self._extract_emc()
+            # Create a small polymer chain with EMC.
+            emc = EMCTool(self.emc_ff)
+            emc.create_polymer_system(self.temp_dir, emc_prefix, smiles,
+                                      1.0, end_cap_smiles, 100, 10, 1)
+            emc.extract_files(self.temp_dir)
+
+            # convert to mol2 to store atomic charges.
             self._emc_to_mol2(emc_prefix)
-            self._read_emc_psf(emc_prefix)
-            self._calc_atomtypes_charges(emc_prefix)
-            # self._generate_ff(emc_prefix)
-            self._create_ff_mapping(emc_prefix)
+            self._calc_gaff2_charges(emc_prefix)
+
+            # create a mapping with GAFF2
+            emc_psf = os.path.join(self.temp_dir, emc_prefix+".psf")
+            gaff_mol2 = os.path.join(self.temp_dir, emc_prefix+".gaff2.mol2")
+            self.mapping.create(emc_psf, gaff_mol2, self.map_file)
 
             if cleanup:
                 shutil.rmtree(self.temp_dir, ignore_errors=True)
@@ -75,164 +75,40 @@ class GAFF2:
         """ Create polymer system with GAFF2 using a FF mapping. """
 
         os.makedirs(self.temp_dir, exist_ok=True)
-        emc_prefix = "system."
+        emc_prefix = "system"
 
-        # Generate the initial configuration of the system using EMC.
-        emc = EMC(self.emc_ff)
-        emc.write_data(self.temp_dir, smiles, density, natoms_total, length,
-                       nchains, end_cap_smiles, f"{emc_prefix+self.emc_ff}.data",
-                       cleanup=False)
-        
-        self._extract_emc()
-        self._emc_to_mol2(emc_prefix+self.emc_ff)
+        emc = EMCTool(self.emc_ff)
+        emc.create_polymer_system(self.temp_dir, emc_prefix, smiles, density,
+                                  end_cap_smiles, natoms_total, length, nchains)
+        emc.extract_files(self.temp_dir)
+
+        self._emc_to_mol2(emc_prefix)
         self._remap_emc_to_gaff(emc_prefix)
         self._build_amber_system(emc_prefix)
         self._write_lammps_data(emc_prefix)
 
-
-    def _create_chain(self, smiles, end_cap_smiles, emc_prefix):
-        """ Create a small polymer chain with EMC. """
-        emc_data_file = emc_prefix + ".data"
-        emc = EMC(self.emc_ff)
-        emc.write_data(self.temp_dir, smiles, 1.0, 100, 10,
-                       1, end_cap_smiles, emc_data_file, cleanup=False)
-
-        # Make sure EMC ran successfully.
-        if not os.path.isfile(os.path.join(self.temp_dir, emc_data_file)):
-            raise RuntimeError("Failed to generate single chain.")
-
-    def _extract_emc(self):
-        """ Extract gzip compressed EMC PDB and PSF files. """
-        input_pdb = os.path.join(self.temp_dir, "system.pdb.gz")
-        input_psf = os.path.join(self.temp_dir, "system.psf.gz")
-        if os.path.isfile(input_pdb):
-            extract_gzip(input_pdb)
-        if os.path.isfile(input_psf):
-            extract_gzip(input_psf)
+        if cleanup:
+            shutil.rmtree(self.temp_dir, ignore_errors=True)
 
 
     def _emc_to_mol2(self, emc_prefix):
-        """ Convert the EMC generated system.pdb.gz to mol2. """
-        input_pdb = os.path.join(self.temp_dir, "system.pdb")
-        input_psf = os.path.join(self.temp_dir, "system.psf")
-        out_mol2 = os.path.join(self.temp_dir, emc_prefix+".mol2")
+        """ Convert the EMC generated prefix.pdb to prefix.mol2. """
+        input_pdb = emc_prefix+".pdb"
+        input_psf = emc_prefix+".psf"
+        out_mol2 =  emc_prefix+".mol2"
 
-        cmd = f"cpptraj -p {input_psf} -y {input_pdb} -x {out_mol2}"
+        amber = AmberTool(self.temp_dir)
+        amber.convert_format(input_pdb, out_mol2, topology=input_psf)
 
-        Pmdlogging.info('Running cpptraj ...')
-        res = execute_command(cmd, capture=False)
-
-        if res.returncode != 0:
-            raise RuntimeError("CppTraj failed.")
-
-        if os.path.isfile(out_mol2):
-            Pmdlogging.info(f"Preprocess - {out_mol2} generated")
         return out_mol2
 
 
-    def _read_emc_psf(self, emc_prefix):
-        """ Read the EMC generated system.psf.gz and save as json. """
-        input_psf = os.path.join(self.temp_dir, "system.psf")
-        out_json = os.path.join(self.temp_dir, emc_prefix+".json")
-
-        # Extract
-        if not os.path.isfile(input_psf):
-            input_psf = extract_gzip(input_psf+".gz")
-
-        psf_file = openmol.psf.Reader()
-        psf_file.read(input_psf)
-        openmol.write_json(psf_file.Mol, out_json)
-        Pmdlogging.info(f"Preprocess - {out_json} generated")
-        return out_json
-
-
-    def _check_emc(self):
-        #@todo: check if EMC is correctly installed.
-        pass
-
-
-    def _check_antechamber(self):
-        """ Check if antechamber/ambertools are available. """
-        antechamber = execute_command("antechamber -h").returncode == 0
-        if not antechamber:
-            raise RuntimeError("AnteChamber not installed. "\
-                    "Please install ambertools using conda. "\
-                    "conda install -c conda-forge ambertools ")
-
-
-    def _check_tleap(self):
-        """ Check if tleap/ambertools are available. """
-        tleap = execute_command("tleap -h").returncode == 0
-        if not tleap:
-            raise RuntimeError("tleap not installed. "\
-                    "Please install ambertools using conda. "\
-                    "conda install -c conda-forge ambertools ")
-
-
-    def _calc_atomtypes_charges(self, emc_prefix, cleanup=False):
+    def _calc_gaff2_charges(self, emc_prefix):
         """ Calculate GAFF specific atom types and charges using AnteChamber."""
-        input_mol2 = emc_prefix+".mol2"
-        out_mol2 = emc_prefix+".gaff2.mol2"
-
-        atom_type = "gaff2"
-        charge_type = "bcc"
-
-        prev_wd = os.getcwd()
-        os.chdir(self.temp_dir)
-
-        cmd = f"antechamber -i {input_mol2} -fi mol2 " \
-              f"-o {out_mol2} -fo mol2 " \
-              f"-c {charge_type} -rn POL -at {atom_type} -s 0 -pl -1 " \
-              f"-pf {'y' if cleanup else 'n'}"
-
-        Pmdlogging.info('Running antechamber. This may take a while ...')
-        res = execute_command(cmd, capture=False)
-
-        if res.returncode != 0:
-            raise RuntimeError("Antechamber failed.")
-
-        if os.path.isfile(out_mol2):
-            Pmdlogging.info(f"Preprocess - {out_mol2} generated")
-
-        os.chdir(prev_wd)
-
-
-    def _generate_ff(self, emc_prefix):
-        """ Generate Amber force field file from a Mol2 file using parmchk2. """
-        input_mol2 = emc_prefix+".gaff2.mol2"
-        out_frcmod = emc_prefix+".gaff2.frcmod"
-
-        atom_type = "gaff2"
-        charge_type = "bcc"
-
-        prev_wd = os.getcwd()
-        os.chdir(self.temp_dir)
-
-        cmd = f"parmchk2 -i {input_mol2} -o {out_frcmod} -f mol2 " \
-              f"-s {2 if atom_type == 'gaff2' else 1 } -a Y -w Y "
-
-        Pmdlogging.info('Running parmchk2 ...')
-        res = execute_command(cmd, capture=False)
-
-        if res.returncode != 0:
-            raise RuntimeError("Parmchk2 failed.")
-
-        if os.path.isfile(out_frcmod):
-            Pmdlogging.info(f"Preprocess - {out_frcmod} generated")
-
-        os.chdir(prev_wd)
-
-
-    def _create_ff_mapping(self, emc_prefix):
-        """ Create mapping between amber and EMC/opls force field. """
-
-        psf_json = os.path.join(self.temp_dir, emc_prefix+".json")
-        gaff_mol2 = os.path.join(self.temp_dir, emc_prefix+".gaff2.mol2")
-
-        self.mapping = openmol.mapping.FFMap(self.emc_ff, "gaff2")
-        self.mapping.load_ff1_file(psf_json)
-        self.mapping.load_ff2_file(gaff_mol2)
-        self.mapping.save_mapping(self.map_file)
+        amber = AmberTool(output_dir=self.temp_dir)
+        amber.calc_atomtypes_charges(emc_prefix+".mol2",
+                                     emc_prefix+".gaff2.mol2", resname="POL",
+                                     quiet=False, cleanup=False)
 
 
     def _remap_emc_to_gaff(self, emc_prefix):
@@ -242,8 +118,9 @@ class GAFF2:
         if self.mapping is None:
             raise ValueError("mapping not loaded/created")
         
-        input_mol2 = os.path.join(self.temp_dir, emc_prefix+self.emc_ff+".mol2")
-        out_mol2 = os.path.join(self.temp_dir, emc_prefix+"gaff2.mol2")
+        input_mol2 = os.path.join(self.temp_dir,
+                                  emc_prefix+".mol2")
+        out_mol2 = os.path.join(self.temp_dir, emc_prefix+".gaff2.mol2")
         system = openmol.tripos_mol2.read(input_mol2)
 
         # Set atom type and charge
@@ -259,15 +136,12 @@ class GAFF2:
 
     def _build_amber_system(self, emc_prefix):
         """ Build Amber simulation files from a MOL2 file. """
-        input_mol2 = emc_prefix+"gaff2.mol2"
-        input_leap = emc_prefix+'gaff2.tleap'
-        out_prmtop = emc_prefix+"gaff2.prmtop"
-        out_restrt = emc_prefix+"gaff2.rst7"
+        input_leap = emc_prefix+'.gaff2.tleap'
+        input_mol2 = emc_prefix+".gaff2.mol2"
+        out_prmtop = emc_prefix+".gaff2.prmtop"
+        out_restrt = emc_prefix+".gaff2.rst7"
 
-        prev_wd = os.getcwd()
-        os.chdir(self.temp_dir)
-
-        with open(input_leap, 'w+') as fp:
+        with open(os.path.join(self.temp_dir, input_leap), 'w+') as fp:
             fp.write(f"# tleap script to build polymer system.\n")
             fp.write(f"logFile leap.log\n")
             fp.write(f"source leaprc.gaff2\n")
@@ -276,17 +150,12 @@ class GAFF2:
             fp.write(f"saveAmberParm sys {out_prmtop} {out_restrt}\n")
             fp.write(f"quit")
 
-        cmd = f"tleap -f {input_leap}"
-
         # Note!! EMC does not wrap the polymer chains.
         # This will create a huge box. We will manually set boxsize
         # during coversion to LAMMPS data.
 
-        Pmdlogging.info('Running tleap. This may take a while ...')
-        res = execute_command(cmd, capture=False)
-
-        if res.returncode != 0:
-            raise RuntimeError("tleap failed.")
+        amber = AmberTool(self.temp_dir)
+        amber.build_amber_system(input_leap, quiet=False)
 
         if os.path.isfile(out_prmtop):
             Pmdlogging.info(f"Preprocess - {out_prmtop} generated")
@@ -294,12 +163,10 @@ class GAFF2:
         if os.path.isfile(out_restrt):
             Pmdlogging.info(f"Preprocess - {out_restrt} generated")
 
-        os.chdir(prev_wd)
 
-
-    def _update_box_from_emc(self, mol : openmol.AttrDict):
+    def _update_box_from_emc(self, emc_prefix : str, mol : dict):
         """ Update the box information of the OpenMol object from EMC PDB. """
-        emc_pdb = os.path.join(self.temp_dir, "system.pdb")
+        emc_pdb = os.path.join(self.temp_dir, emc_prefix+".pdb")
         # Read the emc pdb file to parse boxsize.
         # CRYST1  41.2179  41.2179  41.2179     90     90     90 P 1          1
         with open(emc_pdb) as fp:
@@ -314,7 +181,7 @@ class GAFF2:
         mol['box_x'] = float(words[1])
         mol['box_y'] = float(words[2])
         mol['box_z'] = float(words[2])
-        mol['box_almolha'] = float(words[4])
+        mol['box_alpha'] = float(words[4])
         mol['box_beta'] = float(words[5])
         mol['box_gamma'] = float(words[6])
 
@@ -323,8 +190,8 @@ class GAFF2:
 
     def _write_lammps_data(self, emc_prefix):
         """ Convert amber simulation files into lammps data using OpenMol. """
-        prmtop = os.path.join(self.temp_dir, emc_prefix+"gaff2.prmtop")
-        restrt = os.path.join(self.temp_dir, emc_prefix+"gaff2.rst7")
+        prmtop = os.path.join(self.temp_dir, emc_prefix+".gaff2.prmtop")
+        restrt = os.path.join(self.temp_dir, emc_prefix+".gaff2.rst7")
 
         # read amber parm files
         p = openmol.amber_parm7.read(prmtop, restrt)
@@ -339,7 +206,7 @@ class GAFF2:
         p.title = f"Polymer System with GAFF2"
 
         # use original emc box info
-        p = self._update_box_from_emc(p)
+        p = self._update_box_from_emc(emc_prefix, p)
 
         # write lammps data file
         lmp = openmol.lammps_full.Writer(p, self.lammps_data)
@@ -349,7 +216,7 @@ class GAFF2:
 if __name__ == "__main__":
     # Test environment, if executed directly.
 
-    gaff = GAFF2(working_dir="gaff_tests")
+    gaff = GAFF2(working_dir="tools_tests")
     gaff.load_or_create_mapping("[*]CC[*]", "*C", cleanup=True)
     gaff.create_system(smiles='*CC*', density=1.0, end_cap_smiles="*C",
-                       natoms_total=10000, length=500, nchains=20)
+                       natoms_total=1000, length=50, nchains=20)
