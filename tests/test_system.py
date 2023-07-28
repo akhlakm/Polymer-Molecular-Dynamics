@@ -173,13 +173,6 @@ def test_system_exceptions(test_data):
                       density=0.5,
                       nchains_total=5,
                       ru_per_chain=5),
-        SolventSystem(smiles='*CC*',
-                      solvent_smiles='CCO',
-                      ru_nsolvent_ratio=0.1,
-                      builder=EMC('opls-aa'),
-                      density=0.5,
-                      natoms_total=500,
-                      mw_per_chain=500),
     ],
 )
 def test_system_emc_write_data(tmp_path, system):

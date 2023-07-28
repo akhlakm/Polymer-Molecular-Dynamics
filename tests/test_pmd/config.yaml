@@ -1,5 +1,6 @@
+pmd.version: 1.4.2.post1.dev0+gc8da525.d20220701
 pmd.System:
-  smiles: '*CC(*)c1ccccc1'
+  smiles: '*CC*'
   density: 0.5
   natoms_total: 500
   builder:
@@ -8,9 +9,9 @@ pmd.System:
   natoms_per_chain: 100
   end_cap_smiles: '*C'
   data_fname: data.lmps
-  final_ru_per_chain: 6
+  final_ru_per_chain: 17
   final_nchains_total: 5
-  final_natoms_total: 520
+  final_natoms_total: 550
 pmd.Lammps:
   read_data_from: data.lmps
   get_functional_form_from:
