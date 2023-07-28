@@ -21,7 +21,7 @@ def test_pmd_create(tmp_path, test_data):
     actual_output = d / 'config.yaml'
 
     # Build a Polystyrene system
-    system = System(smiles='*CC(*)c1ccccc1',
+    system = System(smiles='*CC*',
                     density=0.5,
                     natoms_total=500,
                     natoms_per_chain=100,
