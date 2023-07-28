@@ -14,6 +14,7 @@ from pmd.core import Slurm, Torque
                 walltime='24:00:00'), 'job.pbs'),
         (Slurm(run_lammps='lmp.in',
                jobname='PE_equilibration',
+               project='GT-rramprasad3-CODA20',
                nodes=1,
                ntasks_per_node=24,
                time='24:00:00'), 'job.sh'),

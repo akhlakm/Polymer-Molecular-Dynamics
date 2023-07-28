@@ -101,10 +101,11 @@ class Slurm(Job):
 
     Attributes:
         jobname (str): Job name
+        project (str): Project name
         nodes (int): Number of nodes
         ntasks_per_node (int): Number of processors (CPU)
-        mem_per_cpu (int): Memory per CPU
         time (str): Job time
+        mem_per_cpu (int): Memory per CPU
         gpus (int): Number of processors (GPU)
         job_fname (str): Name of the Slurm input file; default: `"job.sh"`
     '''
@@ -139,21 +140,21 @@ class Slurm(Job):
             None
         '''
         with open(os.path.join(output_dir, self._job_fname), 'w') as f:
-            f.write('#!/bin/bash')
-            f.write(f'#SBATCH -J{self._jobname}\n')
-            f.write(f'#SBATCH -A {self._project}\n')
+            f.write('#!/bin/bash\n')
+            f.write(f'#SBATCH --job-name={self._jobname}\n')
+            f.write(f'#SBATCH --account={self._project}\n')
 
             if self._gpus:
                 f.write(f'#SBATCH --gpus={self._gpus}\n')
             else:
-                f.write(f'#SBATCH -N {self._nodes}')
+                f.write(f'#SBATCH --nodes={self._nodes}')
 
-                f.write(f' --ntasks-per-node={ self._ntasks_per_node}\n')
+                f.write(f' --ntasks-per-node={self._ntasks_per_node}\n')
 
-            f.write(f'#SBATCH --mem-per-cpu={ self._mem_per_cpu}G\n')
+            f.write(f'#SBATCH --mem-per-cpu={self._mem_per_cpu}G\n')
             f.write(f'#SBATCH --time={self._time}\n')
-            f.write('#SBATCH -qinferno\n')
-            f.write('#SBATCH -o %j.out\n')
+            f.write('#SBATCH --output=out.o%j\n')
+            f.write('#SBATCH --error=err.e%j\n')
 
             if self._gpus:
                 # TODO
