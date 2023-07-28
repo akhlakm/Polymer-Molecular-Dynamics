@@ -1,4 +1,3 @@
-pmd.version: 1.4.2.post1.dev0+gc8da525.d20220701
 pmd.System:
   smiles: '*CC*'
   density: 0.5
