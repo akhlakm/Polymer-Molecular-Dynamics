@@ -33,6 +33,12 @@ from pmd.preprocessing.maps import EMC2GAFF
 
 
 class GAFF2:
+    """ Build a polymer system using GAFF2 as a force field.
+    
+    Attributes:
+        working_dir (str)   Output directory of the files.
+        data_fname  (str)   Lammps data file name.
+    """
     def __init__(self, working_dir : str = ".", data_fname : str = "data.lmps"):
         self.emc_ff = "opls-aa"
         self.work_dir = working_dir
