@@ -162,7 +162,7 @@ class Slurm(Job):
             else:
                 f.write('module load intel/20.0.4 mvapich2/2.3.6-z2duuy '
                         'lammps/20220107-mva2-dukitd\n')
-                f.write(f'srun -n {self._nodes * self._ppn} '
+                f.write(f'srun -n {self._nodes * self._ntasks_per_node} '
                         f'lmp -in {self._run_lammps}\n')
 
         super().completion_log(output_dir)
