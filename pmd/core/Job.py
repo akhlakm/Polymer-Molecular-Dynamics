@@ -147,14 +147,12 @@ class Slurm(Job):
             if self._gpus:
                 f.write(f'#SBATCH --gpus={self._gpus}\n')
             else:
-                f.write(
-                    f'#SBATCH -N {self._nodes}')
+                f.write(f'#SBATCH -N {self._nodes}')
 
-                f.write(
-                    f' --ntasks-per-node={ self._ntasks_per_node}\n')
-            
-            f.write(f'#SBATCH --mem-per-cpu={ self._mem_per_cpu}G\n')            
-            f.write(f'#SBATCH --time={self._time}\n')            
+                f.write(f' --ntasks-per-node={ self._ntasks_per_node}\n')
+
+            f.write(f'#SBATCH --mem-per-cpu={ self._mem_per_cpu}G\n')
+            f.write(f'#SBATCH --time={self._time}\n')
             f.write('#SBATCH -qinferno\n')
             f.write('#SBATCH -o %j.out\n')
 
@@ -162,7 +160,11 @@ class Slurm(Job):
                 # TODO
                 print('Have not implemented GPU Slurm yet')
             else:
-                f.write('module load intel/20.0.4 mvapich2/2.3.6-z2duuy lammps/20220107-mva2-dukitd\n')
-                f.write(f'srun -n {self._nodes * self._ppn} lmp -in {self._run_lammps}\n')
+                f.write(
+                    'module load intel/20.0.4 mvapich2/2.3.6-z2duuy lammps/20220107-mva2-dukitd\n'
+                )
+                f.write(
+                    f'srun -n {self._nodes * self._ppn} lmp -in {self._run_lammps}\n'
+                )
 
         super().completion_log(output_dir)
