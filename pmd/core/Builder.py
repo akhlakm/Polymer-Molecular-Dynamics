@@ -48,7 +48,8 @@ class Builder:
                            nchains: int, data_fname, cleanup) -> None:
         raise NotImplementedError
 
-    def write_functional_form(self, f: TextIOWrapper) -> None:
+    def write_functional_form(self, f: TextIOWrapper,
+                              use_gpu: bool = False) -> None:
         raise NotImplementedError
 
 
@@ -228,7 +229,7 @@ class EMC(Builder):
 
         self._run_emc(tmp_file_prefilx, output_dir, data_fname, cleanup)
 
-    def write_functional_form(self, f: TextIOWrapper) -> None:
+    def write_functional_form(self, f: TextIOWrapper, use_gpu : bool) -> None:
         if self._force_field.startswith('opls'):
             f.write(f'{"pair_style":<15} lj/cut/coul/long 9.5 9.5\n')
             f.write(f'{"pair_modify":<15} mix geometric tail yes\n')
@@ -394,8 +395,7 @@ class PSP(Builder):
         }
         self._run_psp(input_data, density, data_fname, output_dir, cleanup)
 
-    def write_functional_form(self, f: TextIOWrapper) -> None:
-
+    def write_functional_form(self, f: TextIOWrapper, use_gpu : bool) -> None:
         if self._force_field.startswith('opls'):
             f.write(f'{"pair_style":<15} lj/cut/coul/long 9.0\n')
             f.write(f'{"pair_modify":<15} mix geometric tail yes\n')
@@ -419,17 +419,19 @@ class PSP(Builder):
 
 class OpenMol(Builder):
     '''Object to perform system structure generation using
-    [OpenMol](https://github.com/akhlakm/OpenMOL): A general
+    [OpenMol](https://github.com/akhlakm/OpenMOL) - "A general
     cross-platform tool for preparing simulations of molecules and
-    complex molecular assemblies. This object should be used as input argument
+    complex molecular assemblies". This object should be used as input argument
     of `System` or `Lammps` objects.
 
-    Currently only GAFF2-AM1BCC supported.
+    Attributes:
+        force_field (str): Force field, option is `"gaff2-am1bcc"`; default:
+        `"gaff2-am1bcc"`
+
     '''
 
-    def __init__(self, use_gpu : bool = False) -> None:
+    def __init__(self, force_field : str = 'gaff2-am1bcc') -> None:
         self._force_field = 'gaff2'
-        self._gpu = use_gpu
 
 
     @build_dir
@@ -447,9 +449,9 @@ class OpenMol(Builder):
             raise ValueError("Unsupported force field")
 
 
-    def write_functional_form(self, f: TextIOWrapper) -> None:
+    def write_functional_form(self, f: TextIOWrapper, use_gpu : bool) -> None:
         if self._force_field.startswith('gaff'):
-            if self._gpu:
+            if use_gpu:
                 f.write(f'{"pair_style":<15} lj/cut/coul/long/gpu 8.0\n')
                 f.write(f'{"kspace_style":<15} pppm/gpu 1e-4\n')
             else:
