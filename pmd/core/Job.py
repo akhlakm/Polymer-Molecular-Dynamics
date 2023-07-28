@@ -148,7 +148,6 @@ class Slurm(Job):
                 f.write(f'#SBATCH --gpus={self._gpus}\n')
             else:
                 f.write(f'#SBATCH --nodes={self._nodes}')
-
                 f.write(f' --ntasks-per-node={self._ntasks_per_node}\n')
 
             f.write(f'#SBATCH --mem-per-cpu={self._mem_per_cpu}G\n')

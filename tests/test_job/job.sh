@@ -1,8 +1,7 @@
 #!/bin/bash
 #SBATCH --job-name=PE_equilibration
 #SBATCH --account=GT-rramprasad3-CODA20
-#SBATCH --nodes=1
-#SBATCH --ntasks-per-node=24
+#SBATCH --nodes=1 --ntasks-per-node=24
 #SBATCH --mem-per-cpu=2G
 #SBATCH --time=24:00:00
 #SBATCH --output=out.o%j
