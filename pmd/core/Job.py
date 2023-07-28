@@ -82,9 +82,8 @@ class Torque(Job):
             f.write('\n')
             f.write('cd $PBS_O_WORKDIR\n')
             if self._gpus:
-                f.write(
-                    'module load gcc/8.3.0 mvapich2/2.3.2 lammps-gpu/29Oct20\n'
-                )
+                f.write('module load gcc/8.3.0 mvapich2/2.3.2 '
+                        'lammps-gpu/29Oct20\n')
                 f.write(f'mpirun -np {self._nodes * self._ppn} '
                         f'lmp -sf gpu -pk gpu {self._gpus} -in '
                         f'{self._run_lammps}\n')
@@ -102,9 +101,11 @@ class Slurm(Job):
 
     Attributes:
         jobname (str): Job name
+        project (str): Project name
         nodes (int): Number of nodes
         ntasks_per_node (int): Number of processors (CPU)
         time (str): Job time
+        mem_per_cpu (int): Memory per CPU
         gpus (int): Number of processors (GPU)
         job_fname (str): Name of the Slurm input file; default: `"job.sh"`
     '''
@@ -112,9 +113,11 @@ class Slurm(Job):
     def __init__(self,
                  run_lammps: Lammps,
                  jobname: str,
+                 project: str,
                  nodes: int,
                  ntasks_per_node: int,
                  time: str,
+                 mem_per_cpu: int = 2,
                  gpus: int = 0,
                  job_fname: str = 'job.sh'):
 
@@ -123,6 +126,8 @@ class Slurm(Job):
         self._ntasks_per_node = ntasks_per_node
         self._time = time
         self._gpus = gpus
+        self._mem_per_cpu = mem_per_cpu
+        self._project = project
 
     @build_dir
     def write_job(self, output_dir: str = '.') -> None:
@@ -135,22 +140,28 @@ class Slurm(Job):
             None
         '''
         with open(os.path.join(output_dir, self._job_fname), 'w') as f:
-            f.write('#!/bin/bash')
+            f.write('#!/bin/bash\n')
             f.write(f'#SBATCH --job-name={self._jobname}\n')
-            f.write('#SBATCH -o out.o%j\n')
-            f.write('#SBATCH -e err.e%j\n')
-            f.write(f'#SBATCH --nodes={self._nodes}\n')
+            f.write(f'#SBATCH --account={self._project}\n')
+
             if self._gpus:
                 f.write(f'#SBATCH --gpus={self._gpus}\n')
             else:
-                f.write(
-                    f'#SBATCH --ntasks-per-node={ self._ntasks_per_node}\n')
+                f.write(f'#SBATCH --nodes={self._nodes}')
+                f.write(f' --ntasks-per-node={self._ntasks_per_node}\n')
+
+            f.write(f'#SBATCH --mem-per-cpu={self._mem_per_cpu}G\n')
             f.write(f'#SBATCH --time={self._time}\n')
+            f.write('#SBATCH --output=out.o%j\n')
+            f.write('#SBATCH --error=err.e%j\n')
+
             if self._gpus:
                 # TODO
                 print('Have not implemented GPU Slurm yet')
             else:
-                f.write('module load intel/18.0.2 impi/18.0.2 lammps/9Jan20\n')
-                f.write(f'ibrun lmp -in {self._run_lammps}\n')
+                f.write('module load intel/20.0.4 mvapich2/2.3.6-z2duuy '
+                        'lammps/20220107-mva2-dukitd\n')
+                f.write(f'srun -n {self._nodes * self._ntasks_per_node} '
+                        f'lmp -in {self._run_lammps}\n')
 
         super().completion_log(output_dir)
