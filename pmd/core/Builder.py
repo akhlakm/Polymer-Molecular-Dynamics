@@ -9,7 +9,7 @@ import pandas as pd
 import pyemc
 
 from pmd.util import HiddenPrints, Pmdlogging, build_dir, execute_command
-# from pmd.preprocessing.gaff import GAFF2
+from pmd.preprocessing.gaff import GAFF2
 
 PSP_FORCE_FIELD_OPTIONS = ('opls-lbcc', 'opls-cm1a', 'gaff2-gasteiger',
                            'gaff2-am1bcc')
@@ -427,9 +427,9 @@ class OpenMol(Builder):
     Currently only GAFF2-AM1BCC supported.
     '''
 
-    def __init__(self) -> None:
+    def __init__(self, use_gpu : bool = False) -> None:
         self._force_field = 'gaff2'
-        self._emc_force_field = 'pcff'
+        self._gpu = use_gpu
 
 
     @build_dir
@@ -438,33 +438,28 @@ class OpenMol(Builder):
                    end_cap_smiles: str, data_fname: str,
                    cleanup: bool) -> None:
 
-        tmp_prefix = 'pcff'
-
-        smiles = self._remove_brackets_around_asterisks(smiles)
-        end_cap_smiles = self._remove_brackets_around_asterisks(end_cap_smiles)
-
-        # Generate the initial configuration of the system using EMC.
-        emc = EMC('pcff')
-        emc.write_data(output_dir, smiles, density, natoms_total, length,
-                       nchains, end_cap_smiles, tmp_prefix+".data",
-                       cleanup=True)
-
-        # Use openmol and antechamber to generate GAFF2 files
-        gaff = GAFF2(output_dir)
-        gaff.load_or_create_mapping(smiles, end_cap_smiles, cleanup=cleanup)
-
-        # - Use openmol to build final lammps data file
-        self._make_lammps_data(tmp_prefix, output_dir, data_fname, cleanup)
+        if self._force_field.startswith('gaff'):
+            gaff = GAFF2(output_dir, data_fname)
+            gaff.load_or_create_mapping(smiles, end_cap_smiles, cleanup)
+            gaff.create_system(smiles, density, natoms_total, length, nchains,
+                            end_cap_smiles, cleanup)
+        else:
+            raise ValueError("Unsupported force field")
 
 
     def write_functional_form(self, f: TextIOWrapper) -> None:
-        pass
+        if self._force_field.startswith('gaff'):
+            if self._gpu:
+                f.write(f'{"pair_style":<15} lj/cut/coul/long/gpu 8.0\n')
+                f.write(f'{"kspace_style":<15} pppm/gpu 1e-4\n')
+            else:
+                f.write(f'{"pair_style":<15} lj/cut/coul/long 8.0\n')
+                f.write(f'{"kspace_style":<15} pppm 1e-4\n')
 
-    @staticmethod
-    def _remove_brackets_around_asterisks(smiles: str) -> str:
-        smiles = smiles.replace('[*]', '*')
-        return smiles
-
-
-    def _make_lammps_data(self, tmp_prefix, output_dir, data_fname, cleanup):
-        pass
+            f.write(f'{"pair_modify":<15} mix arithmetic\n')
+            f.write(f'{"bond_style":<15} harmonic\n')
+            f.write(f'{"angle_style":<15} harmonic\n')
+            f.write(f'{"dihedral_style":<15} fourier\n')
+            f.write(f'{"improper_style":<15} cvff\n')
+            f.write(f'{"special_bonds":<15} amber\n')
+            f.write(f'{"newton":<15} on\n')
