@@ -2,6 +2,7 @@ import os
 import pyemc
 
 from pmd.util import Pmdlogging
+from pmd.preprocessing.utils import extract_gzip
 
 class EMCTool:
     '''Low-level interface to run EMC.
@@ -26,6 +27,14 @@ class EMCTool:
     def _remove_brackets_around_asterisks(smiles: str) -> str:
         smiles = smiles.replace('[*]', '*')
         return smiles
+    
+
+    def extract_files(self, output_dir : str):
+        """ Extract EMC generated gzip files, if any. """
+        for f in os.listdir(output_dir):
+            if f.endswith(".gz"):
+                inpfile = os.path.join(output_dir, f)
+                extract_gzip(inpfile)
 
 
     def _run_emc(self, file_prefix: str, output_dir: str, cleanup_exts : list):
