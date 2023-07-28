@@ -82,9 +82,8 @@ class Torque(Job):
             f.write('\n')
             f.write('cd $PBS_O_WORKDIR\n')
             if self._gpus:
-                f.write(
-                    'module load gcc/8.3.0 mvapich2/2.3.2 lammps-gpu/29Oct20\n'
-                )
+                f.write('module load gcc/8.3.0 mvapich2/2.3.2 '
+                        'lammps-gpu/29Oct20\n')
                 f.write(f'mpirun -np {self._nodes * self._ppn} '
                         f'lmp -sf gpu -pk gpu {self._gpus} -in '
                         f'{self._run_lammps}\n')
@@ -160,11 +159,9 @@ class Slurm(Job):
                 # TODO
                 print('Have not implemented GPU Slurm yet')
             else:
-                f.write(
-                    'module load intel/20.0.4 mvapich2/2.3.6-z2duuy lammps/20220107-mva2-dukitd\n'
-                )
-                f.write(
-                    f'srun -n {self._nodes * self._ppn} lmp -in {self._run_lammps}\n'
-                )
+                f.write('module load intel/20.0.4 mvapich2/2.3.6-z2duuy '
+                        'lammps/20220107-mva2-dukitd\n')
+                f.write(f'srun -n {self._nodes * self._ppn} '
+                        f'lmp -in {self._run_lammps}\n')
 
         super().completion_log(output_dir)
