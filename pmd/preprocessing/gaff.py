@@ -114,7 +114,7 @@ class GAFF2:
         amber = AmberTool(output_dir=self.temp_dir)
         amber.calc_atomtypes_charges(emc_prefix+".mol2",
                                      emc_prefix+".gaff2.mol2", resname="POL",
-                                     quiet=False, cleanup=False)
+                                     quiet=True, cleanup=False)
 
 
     def _remap_emc_to_gaff(self, emc_prefix):
@@ -161,7 +161,7 @@ class GAFF2:
         # during coversion to LAMMPS data.
 
         amber = AmberTool(self.temp_dir)
-        amber.build_amber_system(input_leap, quiet=False)
+        amber.build_amber_system(input_leap, quiet=True)
 
         if os.path.isfile(out_prmtop):
             Pmdlogging.info(f"Preprocess - {out_prmtop} generated")
