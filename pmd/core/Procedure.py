@@ -194,7 +194,8 @@ class Equilibration(Procedure):
             f.write(f'{"unfix":<15} fNVELIMIT\n')
             f.write(f'{"unfix":<15} fMOM\n')
             f.write('\n')
-            f.write(f'{"reset_timestep":<15} 0\n')
+            # Not compatible with the recent versions (eg. LAMMPS 23 Jun 2022)
+            # f.write(f'{"reset_timestep":<15} 0\n')
             f.write('\n')
 
         for n, i in enumerate(self._eq_steps):
