@@ -29,8 +29,12 @@ class Procedure():
         if self._reset_timestep_before_run:
             f.write(f'{"reset_timestep":<15} 0\n')
             f.write('\n')
-        f.write(f'{"dump":<15} dump_{self} all custom {self._dump_every} '
-                f'{self._dump_fname} id mol type q xs ys zs ix iy iz\n')
+        if self._dump_fname.endswith(".dcd"):
+            f.write(f'{"dump":<15} dump_{self} all dcd {self._dump_every} '
+                    f'{self._dump_fname}\n')
+        else:
+            f.write(f'{"dump":<15} dump_{self} all custom {self._dump_every} '
+                    f'{self._dump_fname} id mol type q xs ys zs ix iy iz\n')
         if self._dump_image:
             f.write(f'{"dump":<15} dump_image all image {self._duration} '
                     f'{self}.*.jpg type type\n')
