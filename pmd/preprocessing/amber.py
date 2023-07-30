@@ -31,6 +31,7 @@ class AmberTool:
 
     def calc_atomtypes_charges(self, input_mol2 : str, output_mol2 : str,
                                resname : str = "POL", quiet : bool = False,
+                               netcharge : int = 0,
                                cleanup=False):
         """ Calculate GAFF specific atom types and charges using AnteChamber."""
 
@@ -40,7 +41,7 @@ class AmberTool:
         cmd = f"antechamber -i {input_mol2} -fi mol2 " \
               f"-o {output_mol2} -fo mol2 " \
               f"-c {charge_type} -rn {resname} -at {atom_type} -s 0 -pl -1 " \
-              f"-pf {'y' if cleanup else 'n'}"
+              f"-nc {netcharge} -pf {'y' if cleanup else 'n'}"
 
         Pmdlogging.info('Running antechamber. This may take a while ...')
         self._run_in_work_dir(cmd, quiet)
