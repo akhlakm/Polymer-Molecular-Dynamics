@@ -8,7 +8,7 @@ import numpy as np
 import pandas as pd
 import pyemc
 
-from pmd.util import HiddenPrints, Pmdlogging, build_dir, execute_command
+from pmd.util import HiddenPrints, Pmdlogging, build_dir
 from pmd.preprocessing.gaff import GAFF2
 
 PSP_FORCE_FIELD_OPTIONS = ('opls-lbcc', 'opls-cm1a', 'gaff2-gasteiger',
