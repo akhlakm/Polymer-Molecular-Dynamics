@@ -38,7 +38,8 @@ class Procedure():
         if self._dump_image:
             f.write(f'{"dump":<15} dump_image all image {self._duration} '
                     f'{self}.*.jpg type type\n')
-        f.write(f'{"restart":<15} {self._duration} {self}.restart\n')
+        if self._duration > 0:
+            f.write(f'{"restart":<15} {self._duration} {self}.restart\n')
         f.write('\n')
 
     def write_after_run(self, f: TextIOWrapper):
@@ -86,10 +87,9 @@ class Minimization(Procedure):
         self._ftol = ftol
         self._maxiter = maxiter
         self._maxeval = maxeval
-        super().__init__(-1, dump_fname, dump_every)
+        super().__init__(0, dump_fname, dump_every)
 
     def write_lammps(self, f: TextIOWrapper):
-        f.write('### Minimization\n')
         f.write(f'{"min_style":<15} {self._min_style}\n')
         f.write(f'{"minimize":<15} {self._etol} {self._ftol} '
                 f'{self._maxiter} {self._maxeval}\n')
