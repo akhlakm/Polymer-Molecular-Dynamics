@@ -10,16 +10,16 @@ class EMCTool:
     Attributes:
         force_field (str): Force field, options are `"pcff"`, `"opls-aa"`,
             `"opls-ua"`, and `"trappe"`
+        time_travel (bool): Use time travel or not, default: `True`
     '''
 
-    def __init__(self, force_field: str) -> None:
+    def __init__(self, force_field: str, time_travel : bool = True) -> None:
         self._force_field = force_field
 
         self.portal = os.path.abspath(
             os.path.join(os.path.dirname(__file__), "timetravel.so"))
 
-        if not os.path.isfile(self.portal):
-            Pmdlogging.warning("SO file not found.")
+        if not os.path.isfile(self.portal) or not time_travel:
             self.portal = None
 
 
