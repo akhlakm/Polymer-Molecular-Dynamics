@@ -67,6 +67,10 @@ class Minimization(Procedure):
         maxiter (int): Max iterations of minimizer; default: `10**7`
 
         maxeval (int): Max number of force/energy evaluations; default: `10**9`
+
+        dump_fname (str): Name of the dump file; default: `"minimize.lammpstrj"`
+
+        dump_every (int): Dump every this many timesteps; default: `10000`
     '''
 
     def __init__(self,
@@ -74,24 +78,21 @@ class Minimization(Procedure):
                  etol: float = 10**(-8),
                  ftol: float = 10**(-10),
                  maxiter: int = 10**7,
-                 maxeval: int = 10**9):
+                 maxeval: int = 10**9,
+                 dump_fname: str = 'minimize.lammpstrj',
+                 dump_every: int = 10000):
         self._min_style = min_style
         self._etol = etol
         self._ftol = ftol
         self._maxiter = maxiter
         self._maxeval = maxeval
+        super().__init__(-1, dump_fname, dump_every)
 
     def write_lammps(self, f: TextIOWrapper):
         f.write('### Minimization\n')
         f.write(f'{"min_style":<15} {self._min_style}\n')
         f.write(f'{"minimize":<15} {self._etol} {self._ftol} '
                 f'{self._maxiter} {self._maxeval}\n')
-
-    def write_before_run(self, f: TextIOWrapper):
-        pass
-
-    def write_after_run(self, f: TextIOWrapper):
-        pass
 
 
 class Equilibration(Procedure):
