@@ -14,7 +14,7 @@ Requirements:
 - OpenMol  (pip install openmol >= 1.2.1)
    
 Author: Akhlak Mahmood
-Version: 2023-07-23
+Version: 2023-07-30
 
 """
 
@@ -92,6 +92,7 @@ class GAFF2:
         self._remap_emc_to_gaff(emc_prefix)
         self._build_amber_system(emc_prefix)
         self._write_lammps_data(emc_prefix)
+        self._copy_important_files(emc_prefix)
 
         if cleanup:
             shutil.rmtree(self.temp_dir, ignore_errors=True)
@@ -217,6 +218,12 @@ class GAFF2:
         # write lammps data file
         lmp = openmol.lammps_full.Writer(p, self.lammps_data)
         lmp.write()
+
+
+    def _copy_important_files(self, emc_prefix):
+        prmtop = os.path.join(self.temp_dir, emc_prefix+".gaff2.prmtop")
+        prmtop_to = os.path.join(self.work_dir, emc_prefix+".prmtop")
+        shutil.copy2(prmtop, prmtop_to)
 
 
 if __name__ == "__main__":
