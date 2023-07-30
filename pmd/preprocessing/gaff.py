@@ -141,7 +141,7 @@ class GAFF2:
         return out_mol2
 
 
-    def _build_amber_system(self, emc_prefix):
+    def _build_amber_system(self, emc_prefix, water="tip3p"):
         """ Build Amber simulation files from a MOL2 file. """
         input_leap = emc_prefix+'.gaff2.tleap'
         input_mol2 = emc_prefix+".gaff2.mol2"
@@ -150,11 +150,16 @@ class GAFF2:
 
         with open(os.path.join(self.temp_dir, input_leap), 'w+') as fp:
             fp.write(f"# tleap script to build polymer system.\n")
-            fp.write(f"logFile leap.log\n")
             fp.write(f"source leaprc.gaff2\n")
+            fp.write(f"source leaprc.water.{water}\n")
+            fp.write(f"logFile {emc_prefix}.leap.log\n")
             fp.write(f"sys = loadMol2 {input_mol2}\n")
-            fp.write(f"setBox sys centers 1\n")
+            fp.write(f"addIons2 sys Na+ 0\n")
+            fp.write(f"addIons2 sys Cl- 0\n")
+            fp.write(f"setBox sys vdw 1\n")
+            fp.write(f"\n")
             fp.write(f"saveAmberParm sys {out_prmtop} {out_restrt}\n")
+            fp.write(f"charge sys\n")
             fp.write(f"quit")
 
         # Note!! EMC does not wrap the polymer chains.
