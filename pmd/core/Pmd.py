@@ -129,7 +129,8 @@ class Pmd:
     def create(self,
                output_dir: str = '.',
                save_config: bool = False,
-               config_fname: str = 'config.yaml') -> None:
+               config_fname: str = 'config.yaml',
+               cleanup: bool  = True) -> None:
         '''Method to create files from all the pmd objects. This method can
         can also automatically generate a config file if `save_config` input
         argument is set to True.
@@ -143,11 +144,14 @@ class Pmd:
             config_fname (str): Name of the config file; default:
                                 `"config.yaml"`
 
+            cleanup (bool): Whether to clean up files other than the LAMMPS data
+                            files
+
         Returns:
             None
         '''
         if self._system:
-            self._system.write_data(output_dir)
+            self._system.write_data(output_dir, cleanup=cleanup)
         if self._lammps:
             for lmp in self._lammps:
                 lmp.write_lammps(output_dir)

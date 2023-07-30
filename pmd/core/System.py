@@ -184,7 +184,7 @@ class System:
                           ; default: `"."`
 
         cleanup (bool): Whether to clean up files other than the LAMMPS data
-                        file PSP generated
+                        files
 
         Returns:
             None
