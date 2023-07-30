@@ -72,6 +72,7 @@ class EMCTool:
     def create_polymer_system(self, output_dir: str, file_prefix : str,
                               smiles: str, density: float, end_cap_smiles: str,
                               natoms_total: int, length: int, nchains: int,
+                              disable_charge_check : bool = False,
                               cleanup_exts: list = []) -> None:
 
         smiles = self._remove_brackets_around_asterisks(smiles)
@@ -89,6 +90,8 @@ class EMCTool:
             f.write(f'pdb_compress false\n')
             f.write(f'pdb_connect true\n')
             f.write(f'pdb_unwrap none\n')
+            if disable_charge_check:
+                f.write(f'system_charge false\n')
             f.write(f'ITEM END\n')
             f.write(f'\n')
             f.write(f'ITEM GROUPS\n')
