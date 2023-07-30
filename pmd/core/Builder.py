@@ -8,15 +8,18 @@ import numpy as np
 import pandas as pd
 import pyemc
 
-from pmd.util import HiddenPrints, Pmdlogging, build_dir
+from pmd.util import HiddenPrints, Pmdlogging, build_dir, execute_command
+from pmd.preprocessing.gaff import GAFF2
 
 PSP_FORCE_FIELD_OPTIONS = ('opls-lbcc', 'opls-cm1a', 'gaff2-gasteiger',
                            'gaff2-am1bcc')
 EMC_FORCE_FIELD_OPTIONS = ('pcff', 'opls-aa', 'opls-ua', 'trappe')
 
-EMC_EXTS = ('esh', 'data', 'in', 'params', 'vmd', 'emc.gz', 'pdb.gz', 'psf.gz',
+EMC_EXTS = ('esh', 'data', 'in', 'params', 'vmd', 'emc', 'pdb', 'psf',
             'cmap')
 EMC_COEFF_EXCLUSIONS = ('bb', 'ba', 'mbt', 'ebt', 'at', 'aat', 'bb13', 'aa')
+
+MOLTEMPLATE_FORCE_FIELD_OPTIONS = ('gaff2-am1bcc')
 
 
 class Builder:
@@ -45,7 +48,8 @@ class Builder:
                            nchains: int, data_fname, cleanup) -> None:
         raise NotImplementedError
 
-    def write_functional_form(self, f: TextIOWrapper) -> None:
+    def write_functional_form(self, f: TextIOWrapper,
+                              use_gpu: bool = False) -> None:
         raise NotImplementedError
 
 
@@ -164,6 +168,9 @@ class EMC(Builder):
             f.write(f'field {self._force_field}\n')
             f.write(f'density {density}\n')
             f.write(f'ntotal {natoms_total}\n')
+            f.write(f'pdb_compress false\n')
+            f.write(f'pdb_connect true\n')
+            f.write(f'pdb_unwrap none\n')
             f.write('ITEM END\n')
             f.write('\n')
             f.write('ITEM GROUPS\n')
@@ -222,7 +229,7 @@ class EMC(Builder):
 
         self._run_emc(tmp_file_prefilx, output_dir, data_fname, cleanup)
 
-    def write_functional_form(self, f: TextIOWrapper) -> None:
+    def write_functional_form(self, f: TextIOWrapper, use_gpu : bool) -> None:
         if self._force_field.startswith('opls'):
             f.write(f'{"pair_style":<15} lj/cut/coul/long 9.5 9.5\n')
             f.write(f'{"pair_modify":<15} mix geometric tail yes\n')
@@ -388,8 +395,7 @@ class PSP(Builder):
         }
         self._run_psp(input_data, density, data_fname, output_dir, cleanup)
 
-    def write_functional_form(self, f: TextIOWrapper) -> None:
-
+    def write_functional_form(self, f: TextIOWrapper, use_gpu : bool) -> None:
         if self._force_field.startswith('opls'):
             f.write(f'{"pair_style":<15} lj/cut/coul/long 9.0\n')
             f.write(f'{"pair_modify":<15} mix geometric tail yes\n')
@@ -409,3 +415,53 @@ class PSP(Builder):
             f.write(f'{"dihedral_style":<15} fourier\n')
             f.write(f'{"improper_style":<15} cvff\n')
             f.write(f'{"special_bonds":<15} amber\n')
+
+
+class OpenMol(Builder):
+    '''Object to perform system structure generation using
+    [OpenMol](https://github.com/akhlakm/OpenMOL) - "A general
+    cross-platform tool for preparing simulations of molecules and
+    complex molecular assemblies". This object should be used as input argument
+    of `System` or `Lammps` objects.
+
+    Attributes:
+        force_field (str): Force field, option is `"gaff2-am1bcc"`; default:
+        `"gaff2-am1bcc"`
+
+    '''
+
+    def __init__(self, force_field : str = 'gaff2-am1bcc') -> None:
+        self._force_field = 'gaff2'
+
+
+    @build_dir
+    def write_data(self, output_dir: str, smiles: str, density: float,
+                   natoms_total: int, length: int, nchains: int,
+                   end_cap_smiles: str, data_fname: str,
+                   cleanup: bool) -> None:
+
+        if self._force_field.startswith('gaff'):
+            gaff = GAFF2(output_dir, data_fname)
+            gaff.load_or_create_mapping(smiles, end_cap_smiles, cleanup)
+            gaff.create_system(smiles, density, natoms_total, length, nchains,
+                            end_cap_smiles, cleanup)
+        else:
+            raise ValueError("Unsupported force field")
+
+
+    def write_functional_form(self, f: TextIOWrapper, use_gpu : bool) -> None:
+        if self._force_field.startswith('gaff'):
+            if use_gpu:
+                f.write(f'{"pair_style":<15} lj/cut/coul/long/gpu 8.0\n')
+                f.write(f'{"kspace_style":<15} pppm/gpu 1e-4\n')
+            else:
+                f.write(f'{"pair_style":<15} lj/cut/coul/long 8.0\n')
+                f.write(f'{"kspace_style":<15} pppm 1e-4\n')
+
+            f.write(f'{"pair_modify":<15} mix arithmetic\n')
+            f.write(f'{"bond_style":<15} harmonic\n')
+            f.write(f'{"angle_style":<15} harmonic\n')
+            f.write(f'{"dihedral_style":<15} fourier\n')
+            f.write(f'{"improper_style":<15} cvff\n')
+            f.write(f'{"special_bonds":<15} amber\n')
+            f.write(f'{"newton":<15} on\n')
