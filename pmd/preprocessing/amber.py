@@ -25,14 +25,15 @@ class AmberTool:
         try:
             os.chdir(self.work_dir)
             res = execute_command(command, capture=capture)
-            if res.returncode != 0:
-                raise RuntimeError(command)
-            
+
             if save_prefix:
                 with open(f"{save_prefix}.stdout.txt", "a+") as fp:
                     fp.write(res.stdout.decode("utf-8"))
                 with open(f"{save_prefix}.stderr.txt", "a+") as fp:
                     fp.write(res.stderr.decode("utf-8"))
+
+            if res.returncode != 0:
+                raise RuntimeError(command)
 
         finally:
             os.chdir(prev_wd)
