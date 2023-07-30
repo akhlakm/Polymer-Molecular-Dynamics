@@ -29,10 +29,10 @@ class AmberTool:
                 raise RuntimeError(command)
             
             if save_prefix:
-                with open(f"{save_prefix}.stdout", "a+") as fp:
-                    fp.write(res.stdout)
-                with open(f"{save_prefix}.stderr", "a+") as fp:
-                    fp.write(res.stderr)
+                with open(f"{save_prefix}.stdout.txt", "a+") as fp:
+                    fp.write(res.stdout.decode("utf-8"))
+                with open(f"{save_prefix}.stderr.txt", "a+") as fp:
+                    fp.write(res.stderr.decode("utf-8"))
 
         finally:
             os.chdir(prev_wd)
