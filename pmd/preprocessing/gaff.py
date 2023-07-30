@@ -44,7 +44,7 @@ class GAFF2:
         self.work_dir = working_dir
         self.temp_dir = os.path.join(self.work_dir, "_gaff")
         self.mapping = EMC2GAFF(self.emc_ff, self.temp_dir)
-        self.map_file = os.path.join(self.work_dir, self.emc_ff+"2gaff.map")
+        self.map_file = os.path.join(self.temp_dir, self.emc_ff+"2gaff.map")
         self.lammps_data = os.path.join(self.work_dir, data_fname)
 
 
