@@ -24,7 +24,8 @@ def to_yaml_dict(cls: Union[System, Builder, Lammps, Procedure, Job]) -> Dict:
     return {
         # strip off the front underscore and only add to dict
         # if value is not None
-        k.lstrip('_'): custom_class_yaml_dumper(v)
+        k.lstrip('_'):
+        custom_class_yaml_dumper(v)
         for k, v in cls.__dict__.items() if v is not None
     }
 
