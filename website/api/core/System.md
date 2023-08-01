@@ -20,41 +20,35 @@ Template object to contain System initialization settings
 - `builder` _Builder_ - Builder (One of `EMC` or `PSP`)
   
 - `natoms_total` _int_ - Total number of atoms in the system, one of
-  this attribute and `nchains_total` has to be
-  provided but not both (providing both will result
-  in an error); default: `None`
+  this attribute and `nchains_total` has to be provided but not both
+  (providing both will result in an error); default: `None`
   
 - `nchains_total` _int_ - Total number of polymer chains in the system, one
-  of this attribute and `natoms_total` has to be
-  provided but not both (providing both will result
-  in an error); default: `None`
+  of this attribute and `natoms_total` has to be provided but not
+  both (providing both will result in an error); default: `None`
   
 - `natoms_per_chain` _int_ - Number of atoms per polymer chain, one of this
-  attribute, `mw_per_chain`, and `ru_per_chain`
-  has to be provided but not more than 1
-  (providing more than 1 will result in an
+  attribute, `mw_per_chain`, and `ru_per_chain` has to be provided
+  but not more than 1 (providing more than 1 will result in an
   error); default: `None`
   
 - `mw_per_chain` _int_ - Molecular weight of the polymer, one of this
-  attribute, `natoms_per_chain`, and `ru_per_chain`
-  has to be provided but not more than 1
-  (providing more than 1 will result in an
-  error); default: `None`
+  attribute, `natoms_per_chain`, and `ru_per_chain` has to be
+  provided but not more than 1 (providing more than 1 will result in
+  an error); default: `None`
   
 - `ru_per_chain` _int_ - Number of repeating unit per polymer chain, one of
-  this attribute, `natoms_per_chain`, and
-  `mw_per_chain` has to be provided but not more
-  than 1 (providing more than 1 will result in an
-  error); default: `None`
+  this attribute, `natoms_per_chain`, and `mw_per_chain` has to be
+  provided but not more than 1 (providing more than 1 will result in
+  an error); default: `None`
   
 - `end_cap_smiles` _str_ - SMILES string of the end-cap unit for polymers
-  ; default: `"*C"` (hint: put `"*[H]"` for end
-  capping with -H)
+  ; default: `"*C"` (hint: put `"*[H]"` for end capping with -H)
   
 - `data_fname` _str_ - File name of the output data file, which will be
   read in by LAMMPS
-  [read_data](https://docs.lammps.org/read_data.html)
-  command; default: `"data.lmps"`
+  [read_data](https://docs.lammps.org/read_data.html) command
+  ; default: `"data.lmps"`
 
 ### write\_data
 
@@ -93,49 +87,42 @@ Template object to contain System with solvents initialization settings
 - `solvent_smiles` _str_ - SMILES string of the solvent
   
 - `ru_nsolvent_ratio` _float_ - The ratio of total number of repeating units
-  in the system and total number of solvent
-  molecules
+  in the system and total number of solvent molecules
   
 - `density` _float_ - Density of the system
   
 - `builder` _Builder_ - Builder (One of `EMC` or `PSP`)
   
 - `natoms_total` _int_ - Total number of atoms in the system, one of
-  this attribute and `nchains_total` has to be
-  provided but not both (providing both will result
-  in an error); default: `None`
+  this attribute and `nchains_total` has to be provided but not both
+  (providing both will result in an error); default: `None`
   
 - `nchains_total` _int_ - Total number of polymer chains in the system, one
-  of this attribute and `natoms_total` has to be
-  provided but not both (providing both will result
-  in an error); default: `None`
+  of this attribute and `natoms_total` has to be provided but not
+  both (providing both will result in an error); default: `None`
   
 - `natoms_per_chain` _int_ - Number of atoms per polymer chain, one of this
-  attribute, `mw_per_chain`, and `ru_per_chain`
-  has to be provided but not more than 1
-  (providing more than 1 will result in an
+  attribute, `mw_per_chain`, and `ru_per_chain` has to be provided
+  but not more than 1 (providing more than 1 will result in an
   error); default: `None`
   
 - `mw_per_chain` _int_ - Molecular weight of the polymer, one of this
-  attribute, `natoms_per_chain`, and `ru_per_chain`
-  has to be provided but not more than 1
-  (providing more than 1 will result in an
-  error); default: `None`
+  attribute, `natoms_per_chain`, and `ru_per_chain` has to be
+  provided but not more than 1 (providing more than 1 will result in
+  an error); default: `None`
   
 - `ru_per_chain` _int_ - Number of repeating unit per polymer chain, one of
-  this attribute, `natoms_per_chain`, and
-  `mw_per_chain` has to be provided but not more
-  than 1 (providing more than 1 will result in an
-  error); default: `None`
+  this attribute, `natoms_per_chain`, and `mw_per_chain` has to be
+  provided but not more than 1 (providing more than 1 will result in
+  an error); default: `None`
   
 - `end_cap_smiles` _str_ - SMILES string of the end-cap unit for polymers
-  ; default: `"*C"` (hint: put `"*[H]"` for end
-  capping with -H)
+  ; default: `"*C"` (hint: put `"*[H]"` for end capping with -H)
   
 - `data_fname` _str_ - File name of the output data file, which will be
   read in by LAMMPS
-  [read_data](https://docs.lammps.org/read_data.html)
-  command; default: `"data.lmps"`
+  [read_data](https://docs.lammps.org/read_data.html) command
+  ; default: `"data.lmps"`
 
 ### write\_data
 
