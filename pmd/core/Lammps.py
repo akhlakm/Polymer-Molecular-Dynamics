@@ -18,14 +18,14 @@ class Lammps:
     Attributes:
         read_data_from (System | str): System object that the data file will
             be read from. This can also be your data file name string if you
-            do not generate your system via PMD; one of this attribute and
+            do not generate your system via PMD; one of this attribute or
             `read_restart_from` has to be provided but not both (providing
             both will result in an error); default: `None`
 
         read_restart_from (Lammps | str): Lammps object that the last restart
             file created will be read from. This can also be your previous
             lammps file name string if you do not have previous Lammps object;
-            one of this attribute and `read_data_from` has to be provided but
+            one of this attribute or `read_data_from` has to be provided but
             not both (providing both will result in an error); default: `None`
 
         get_functional_form_from (Builder): Only needed if `read_data_from` or
@@ -119,7 +119,7 @@ class Lammps:
         '''Method to add simulation procedure
         Parameters:
             procedure (Procedure): One of `Minimization`, `Equilibration`,
-                `NPT`, `NVT`, `MSDMeasurement`, `TgMeasurement`, and
+                `NPT`, `NVT`, `MSDMeasurement`, `TgMeasurement`, or
                 `Deformation`
 
         Returns:

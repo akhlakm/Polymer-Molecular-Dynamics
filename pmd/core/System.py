@@ -21,25 +21,25 @@ class System:
         builder (Builder): Builder (One of `EMC` or `PSP`)
 
         natoms_total (int): Total number of atoms in the system, one of
-            this attribute and `nchains_total` has to be provided but not both
+            this attribute or `nchains_total` has to be provided but not both
             (providing both will result in an error); default: `None`
 
         nchains_total (int): Total number of polymer chains in the system, one
-            of this attribute and `natoms_total` has to be provided but not
+            of this attribute or `natoms_total` has to be provided but not
             both (providing both will result in an error); default: `None`
 
         natoms_per_chain (int): Number of atoms per polymer chain, one of this
-            attribute, `mw_per_chain`, and `ru_per_chain` has to be provided
+            attribute, `mw_per_chain`, or `ru_per_chain` has to be provided
             but not more than 1 (providing more than 1 will result in an
             error); default: `None`
 
         mw_per_chain (int): Molecular weight of the polymer, one of this
-            attribute, `natoms_per_chain`, and `ru_per_chain` has to be
+            attribute, `natoms_per_chain`, or `ru_per_chain` has to be
             provided but not more than 1 (providing more than 1 will result in
             an error); default: `None`
 
         ru_per_chain (int): Number of repeating unit per polymer chain, one of
-            this attribute, `natoms_per_chain`, and `mw_per_chain` has to be
+            this attribute, `natoms_per_chain`, or `mw_per_chain` has to be
             provided but not more than 1 (providing more than 1 will result in
             an error); default: `None`
 
@@ -177,8 +177,8 @@ class System:
         output_dir (str): Directory for the generated LAMMPS data file
             ; default: `"."`
 
-        cleanup (bool): Whether to clean up files other than the LAMMPS data
-            file PSP generated
+        cleanup (bool): set to `False` to see all the processing files PSP
+            generated (e.g. `*.pdb`, `*.xyz`, and more); default: `True`
 
         Returns:
             None
@@ -208,25 +208,25 @@ class SolventSystem(System):
         builder (Builder): Builder (One of `EMC` or `PSP`)
 
         natoms_total (int): Total number of atoms in the system, one of
-            this attribute and `nchains_total` has to be provided but not both
+            this attribute or `nchains_total` has to be provided but not both
             (providing both will result in an error); default: `None`
 
         nchains_total (int): Total number of polymer chains in the system, one
-            of this attribute and `natoms_total` has to be provided but not
+            of this attribute or `natoms_total` has to be provided but not
             both (providing both will result in an error); default: `None`
 
         natoms_per_chain (int): Number of atoms per polymer chain, one of this
-            attribute, `mw_per_chain`, and `ru_per_chain` has to be provided
+            attribute, `mw_per_chain`, or `ru_per_chain` has to be provided
             but not more than 1 (providing more than 1 will result in an
             error); default: `None`
 
         mw_per_chain (int): Molecular weight of the polymer, one of this
-            attribute, `natoms_per_chain`, and `ru_per_chain` has to be
+            attribute, `natoms_per_chain`, or `ru_per_chain` has to be
             provided but not more than 1 (providing more than 1 will result in
             an error); default: `None`
 
         ru_per_chain (int): Number of repeating unit per polymer chain, one of
-            this attribute, `natoms_per_chain`, and `mw_per_chain` has to be
+            this attribute, `natoms_per_chain`, or `mw_per_chain` has to be
             provided but not more than 1 (providing more than 1 will result in
             an error); default: `None`
 
@@ -333,8 +333,8 @@ class SolventSystem(System):
         output_dir (str): Directory for the generated LAMMPS data file
             ; default: `"."`
 
-        cleanup (bool): Whether to clean up files other than the LAMMPS data
-            file PSP generated
+        cleanup (bool): set to `False` to see all the processing files PSP
+            generated (e.g. `*.pdb`, `*.xyz`, and more); default: `True`
 
         Returns:
             None

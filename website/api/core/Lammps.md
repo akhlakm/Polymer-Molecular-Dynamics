@@ -15,14 +15,14 @@ Template object to contain LAMMPS initialization settings
 
 - `read_data_from` _System | str_ - System object that the data file will
   be read from. This can also be your data file name string if you
-  do not generate your system via PMD; one of this attribute and
+  do not generate your system via PMD; one of this attribute or
   `read_restart_from` has to be provided but not both (providing
   both will result in an error); default: `None`
   
 - `read_restart_from` _Lammps | str_ - Lammps object that the last restart
   file created will be read from. This can also be your previous
   lammps file name string if you do not have previous Lammps object;
-  one of this attribute and `read_data_from` has to be provided but
+  one of this attribute or `read_data_from` has to be provided but
   not both (providing both will result in an error); default: `None`
   
 - `get_functional_form_from` _Builder_ - Only needed if `read_data_from` or
@@ -66,7 +66,7 @@ Method to add simulation procedure
 **Arguments**:
 
 - `procedure` _Procedure_ - One of `Minimization`, `Equilibration`,
-  `NPT`, `NVT`, `MSDMeasurement`, `TgMeasurement`, and
+  `NPT`, `NVT`, `MSDMeasurement`, `TgMeasurement`, or
   `Deformation`
   
 
