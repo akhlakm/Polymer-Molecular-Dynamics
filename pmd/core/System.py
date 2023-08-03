@@ -21,41 +21,35 @@ class System:
         builder (Builder): Builder (One of `EMC` or `PSP`)
 
         natoms_total (int): Total number of atoms in the system, one of
-                            this attribute and `nchains_total` has to be
-                            provided but not both (providing both will result
-                            in an error); default: `None`
+            this attribute or `nchains_total` has to be provided but not both
+            (providing both will result in an error); default: `None`
 
         nchains_total (int): Total number of polymer chains in the system, one
-                             of this attribute and `natoms_total` has to be
-                             provided but not both (providing both will result
-                             in an error); default: `None`
+            of this attribute or `natoms_total` has to be provided but not
+            both (providing both will result in an error); default: `None`
 
         natoms_per_chain (int): Number of atoms per polymer chain, one of this
-                                attribute, `mw_per_chain`, and `ru_per_chain`
-                                has to be provided but not more than 1
-                                (providing more than 1 will result in an
-                                error); default: `None`
+            attribute, `mw_per_chain`, or `ru_per_chain` has to be provided
+            but not more than 1 (providing more than 1 will result in an
+            error); default: `None`
 
         mw_per_chain (int): Molecular weight of the polymer, one of this
-                            attribute, `natoms_per_chain`, and `ru_per_chain`
-                            has to be provided but not more than 1
-                            (providing more than 1 will result in an
-                            error); default: `None`
+            attribute, `natoms_per_chain`, or `ru_per_chain` has to be
+            provided but not more than 1 (providing more than 1 will result in
+            an error); default: `None`
 
         ru_per_chain (int): Number of repeating unit per polymer chain, one of
-                            this attribute, `natoms_per_chain`, and
-                            `mw_per_chain` has to be provided but not more
-                            than 1 (providing more than 1 will result in an
-                            error); default: `None`
+            this attribute, `natoms_per_chain`, or `mw_per_chain` has to be
+            provided but not more than 1 (providing more than 1 will result in
+            an error); default: `None`
 
         end_cap_smiles (str): SMILES string of the end-cap unit for polymers
-                              ; default: `"*C"` (hint: put `"*[H]"` for end
-                              capping with -H)
+            ; default: `"*C"` (hint: put `"*[H]"` for end capping with -H)
 
         data_fname (str): File name of the output data file, which will be
-                          read in by LAMMPS
-                          [read_data](https://docs.lammps.org/read_data.html)
-                          command; default: `"data.lmps"`
+            read in by LAMMPS
+            [read_data](https://docs.lammps.org/read_data.html) command
+            ; default: `"data.lmps"`
     '''
 
     def __init__(self,
@@ -181,10 +175,10 @@ class System:
 
         Parameters:
         output_dir (str): Directory for the generated LAMMPS data file
-                          ; default: `"."`
+            ; default: `"."`
 
-        cleanup (bool): Whether to clean up files other than the LAMMPS data
-                        file PSP generated
+        cleanup (bool): set to `False` to see all the processing files PSP
+            generated (e.g. `*.pdb`, `*.xyz`, and more); default: `True`
 
         Returns:
             None
@@ -207,49 +201,42 @@ class SolventSystem(System):
         solvent_smiles (str): SMILES string of the solvent
 
         ru_nsolvent_ratio (float): The ratio of total number of repeating units
-                                   in the system and total number of solvent
-                                   molecules
+            in the system and total number of solvent molecules
 
         density (float): Density of the system
 
         builder (Builder): Builder (One of `EMC` or `PSP`)
 
         natoms_total (int): Total number of atoms in the system, one of
-                            this attribute and `nchains_total` has to be
-                            provided but not both (providing both will result
-                            in an error); default: `None`
+            this attribute or `nchains_total` has to be provided but not both
+            (providing both will result in an error); default: `None`
 
         nchains_total (int): Total number of polymer chains in the system, one
-                             of this attribute and `natoms_total` has to be
-                             provided but not both (providing both will result
-                             in an error); default: `None`
+            of this attribute or `natoms_total` has to be provided but not
+            both (providing both will result in an error); default: `None`
 
         natoms_per_chain (int): Number of atoms per polymer chain, one of this
-                                attribute, `mw_per_chain`, and `ru_per_chain`
-                                has to be provided but not more than 1
-                                (providing more than 1 will result in an
-                                error); default: `None`
+            attribute, `mw_per_chain`, or `ru_per_chain` has to be provided
+            but not more than 1 (providing more than 1 will result in an
+            error); default: `None`
 
         mw_per_chain (int): Molecular weight of the polymer, one of this
-                            attribute, `natoms_per_chain`, and `ru_per_chain`
-                            has to be provided but not more than 1
-                            (providing more than 1 will result in an
-                            error); default: `None`
+            attribute, `natoms_per_chain`, or `ru_per_chain` has to be
+            provided but not more than 1 (providing more than 1 will result in
+            an error); default: `None`
 
         ru_per_chain (int): Number of repeating unit per polymer chain, one of
-                            this attribute, `natoms_per_chain`, and
-                            `mw_per_chain` has to be provided but not more
-                            than 1 (providing more than 1 will result in an
-                            error); default: `None`
+            this attribute, `natoms_per_chain`, or `mw_per_chain` has to be
+            provided but not more than 1 (providing more than 1 will result in
+            an error); default: `None`
 
         end_cap_smiles (str): SMILES string of the end-cap unit for polymers
-                              ; default: `"*C"` (hint: put `"*[H]"` for end
-                              capping with -H)
+            ; default: `"*C"` (hint: put `"*[H]"` for end capping with -H)
 
         data_fname (str): File name of the output data file, which will be
-                          read in by LAMMPS
-                          [read_data](https://docs.lammps.org/read_data.html)
-                          command; default: `"data.lmps"`
+            read in by LAMMPS
+            [read_data](https://docs.lammps.org/read_data.html) command
+            ; default: `"data.lmps"`
     '''
 
     def __init__(self,
@@ -344,10 +331,10 @@ class SolventSystem(System):
 
         Parameters:
         output_dir (str): Directory for the generated LAMMPS data file
-                          ; default: `"."`
+            ; default: `"."`
 
-        cleanup (bool): Whether to clean up files other than the LAMMPS data
-                        file PSP generated
+        cleanup (bool): set to `False` to see all the processing files PSP
+            generated (e.g. `*.pdb`, `*.xyz`, and more); default: `True`
 
         Returns:
             None

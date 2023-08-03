@@ -61,7 +61,7 @@ class Torque(Job):
 
         Parameters:
             output_dir (str): Directory for the Torque input file; default:
-            `"."`
+                `"."`
 
         Returns:
             None

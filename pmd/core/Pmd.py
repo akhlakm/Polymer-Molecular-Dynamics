@@ -136,12 +136,12 @@ class Pmd:
 
         Parameters:
             output_dir (str): Directory for all the generated files; default:
-                              `"."`
+                `"."`
 
             save_config (bool): Whether to save a config file; default: `False`
 
             config_fname (str): Name of the config file; default:
-                                `"config.yaml"`
+                `"config.yaml"`
 
         Returns:
             None
@@ -165,10 +165,10 @@ class Pmd:
 
         Parameters:
             output_dir (str): Directory for all the generated files; default:
-                              `"."`
+                `"."`
 
             config_fname (str): Name of the config file; default:
-                                `"config.yaml"`
+                `"config.yaml"`
 
         Returns:
             None
@@ -209,7 +209,7 @@ class Pmd:
             config_file (str): Config file to load
 
             output_dir (str): Directory for all the generated files; default:
-                              `"."`
+                `"."`
 
         Returns:
             None
