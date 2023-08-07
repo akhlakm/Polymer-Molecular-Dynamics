@@ -1,8 +1,8 @@
 """
 Create a polymer system with GAFF2 as force field using the following steps:
-- Build a small 1 chain system with OPLS-AA force field using EMC.
+- Build a small 1 chain system with the PCFF force field using EMC.
 - Calculate AM1-BCC and GAFF2 atom types of the chain with AnteChamber.
-- Create a mapping between the OPLS and GAFF2 atom types with OpenMol.
+- Create a mapping between the PCFF and GAFF2 atom types with OpenMol.
 - Build the target larger polymer system using EMC.
 - Using the mapping, convert the atom types and charges to GAFF2 types.
 - Build the polymer system using tLeap for Amber.
@@ -11,19 +11,20 @@ Create a polymer system with GAFF2 as force field using the following steps:
 Requirements:
 - emc-pypi (pip install emc-pypi)
 - Ambertools (conda install -c conda-forge ambertools)
-- OpenMol  (pip install openmol >= 1.2.1)
-   
+- OpenMol  (pip install OpenMol >= 1.2.1)
+
 Author: Akhlak Mahmood
-Version: 2023-07-30
+Version: 2023-08-02
 
 """
 
 import os
 import shutil
 
-import openmol.tripos_mol2
-import openmol.amber_parm7
-import openmol.lammps_full
+import OpenMol.pdb
+import OpenMol.tripos_mol2
+import OpenMol.amber_parm7
+import OpenMol.lammps_full
 
 from pmd.util import Pmdlogging
 from pmd.preprocessing.emc import EMCTool
@@ -31,16 +32,16 @@ from pmd.preprocessing.amber import AmberTool
 from pmd.preprocessing.maps import EMC2GAFF
 
 
-
 class GAFF2:
     """ Build a polymer system using GAFF2 as a force field.
     
     Attributes:
-        working_dir (str)   Output directory of the files.
-        data_fname  (str)   Lammps data file name.
+        working_dir (str):   Output directory of the files.
+        data_fname  (str):   Lammps data file name.
     """
     def __init__(self, working_dir : str = ".", data_fname : str = "data.lmps"):
-        self.emc_ff = "opls-aa"
+        self.emc_ff = "pcff"
+        self.n_monomers_1chain = 1
         self.work_dir = working_dir
         self.temp_dir = os.path.join(self.work_dir, "_gaff")
         self.mapping = EMC2GAFF(self.emc_ff, self.temp_dir)
@@ -60,11 +61,13 @@ class GAFF2:
             # Create a small polymer chain with EMC.
             emc = EMCTool(self.emc_ff)
             emc.create_polymer_system(self.temp_dir, emc_prefix, smiles,
-                                      1.0, end_cap_smiles, 100, 10, 1)
+                                      1.0, end_cap_smiles, 100,
+                                      self.n_monomers_1chain, 1)
             emc.extract_files(self.temp_dir)
 
             # convert to mol2 to store atomic charges.
             self._emc_to_mol2(emc_prefix)
+            self._fix_single_chain(emc_prefix)
             self._calc_gaff2_charges(emc_prefix)
 
             # create a mapping with GAFF2
@@ -100,22 +103,69 @@ class GAFF2:
 
     def _emc_to_mol2(self, emc_prefix):
         """ Convert the EMC generated prefix.pdb to prefix.mol2. """
-        input_pdb = emc_prefix+".pdb"
-        input_psf = emc_prefix+".psf"
-        out_mol2 =  emc_prefix+".mol2"
+        inp_pdb =  os.path.join(self.temp_dir, emc_prefix+".pdb")
+        out_mol2 =  os.path.join(self.temp_dir, emc_prefix+".om.mol2")
 
-        amber = AmberTool(self.temp_dir)
-        amber.convert_format(input_pdb, out_mol2, topology=input_psf)
+        pdb = OpenMol.pdb.PDB()
+        pdb.read(inp_pdb)
+
+        pdb.Mol.title = f"EMC {emc_prefix} PDB converted to MOL2"
+
+        system = OpenMol.tripos_mol2.build(pdb.Mol)
+        writer = OpenMol.tripos_mol2.Writer(system, out_mol2)
+        writer.write()
 
         return out_mol2
+
+
+    def _fix_single_chain(self, emc_prefix):
+        """ Make sure there is only 1 chain in the mol2 file. """
+        inp_mol2 =  os.path.join(self.temp_dir, emc_prefix+".om.mol2")
+        out_mol2 =  os.path.join(self.temp_dir, emc_prefix+".mol2")
+
+        max_resid = self.n_monomers_1chain + 2 # monomers, 2 terminators
+        chain = OpenMol.tripos_mol2.read(inp_mol2)
+
+        # Fix the atoms section
+        n_atoms = len(chain.atom_name)
+        keep = [
+            True if chain.atom_resid[i] < max_resid else False
+            for i in range(n_atoms)
+        ]
+        remove_atom_items = lambda key : [
+            chain[key][i] for i in range(n_atoms) if keep[i]
+        ]
+        for key in chain.keys():
+            if key.startswith('atom_') and chain[key]:
+                chain[key] = remove_atom_items(key)
+
+        # Fix the bonds section
+        n_atoms = len(chain.atom_name)
+        n_bonds = len(chain.bond_from)
+        keep = [
+            True if chain.bond_from[i] < n_atoms
+            or chain.bond_to[i] < n_atoms else False
+            for i in range(n_bonds)
+        ]
+        remove_bond_items = lambda key : [
+            chain[key][i] for i in range(n_bonds) if keep[i]
+        ]
+
+        for key in chain.keys():
+            if key.startswith('bond_') and chain[key]:
+                chain[key] = remove_bond_items(key)
+
+        chain = OpenMol.tripos_mol2.build(chain)
+        writer = OpenMol.tripos_mol2.Writer(chain, out_mol2)
+        writer.write()
 
 
     def _calc_gaff2_charges(self, emc_prefix):
         """ Calculate GAFF specific atom types and charges using AnteChamber."""
         amber = AmberTool(output_dir=self.temp_dir)
         amber.calc_atomtypes_charges(emc_prefix+".mol2",
-                                     emc_prefix+".gaff2.mol2", resname="POL",
-                                     quiet=True, cleanup=False)
+                                     emc_prefix+".gaff2.mol2", quiet=True,
+                                     cleanup=False)
 
 
     def _remap_emc_to_gaff(self, emc_prefix):
@@ -125,24 +175,25 @@ class GAFF2:
         if self.mapping is None:
             raise ValueError("mapping not loaded/created")
         
-        input_mol2 = os.path.join(self.temp_dir,
-                                  emc_prefix+".mol2")
+        input_mol2 = os.path.join(self.temp_dir, emc_prefix+".om.mol2")
         out_mol2 = os.path.join(self.temp_dir, emc_prefix+".gaff2.mol2")
-        system = openmol.tripos_mol2.read(input_mol2)
+        system = OpenMol.tripos_mol2.read(input_mol2)
 
         # Set atom type and charge
         for i, orig_atom_name in enumerate(system.atom_name):
-            system.atom_type[i] = self.mapping.ff2_name2type[orig_atom_name]
-            system.atom_q[i] = self.mapping.ff2_name2charge[orig_atom_name]
+            orig_resname = system.atom_resname[i][:3]
+            key = f"{orig_resname}>{orig_atom_name}"
+            system.atom_type[i] = self.mapping.ff2_name2type[key]
+            system.atom_q[i] = self.mapping.ff2_name2charge[key]
 
-        system = openmol.tripos_mol2.build(system)
-        writer = openmol.tripos_mol2.Writer(system, out_mol2)
+        system = OpenMol.tripos_mol2.build(system)
+        writer = OpenMol.tripos_mol2.Writer(system, out_mol2)
         writer.write()
         return out_mol2
 
 
     def _build_amber_system(self, emc_prefix, water="tip3p"):
-        """ Build Amber simulation files from a MOL2 file. """
+        """ Build Amber simulation files from the MOL2 file. """
         input_leap = emc_prefix+'.gaff2.tleap'
         input_mol2 = emc_prefix+".gaff2.mol2"
         out_prmtop = emc_prefix+".gaff2.prmtop"
@@ -206,13 +257,13 @@ class GAFF2:
         restrt = os.path.join(self.temp_dir, emc_prefix+".gaff2.rst7")
 
         # read amber parm files
-        p = openmol.amber_parm7.read(prmtop, restrt)
+        p = OpenMol.amber_parm7.read(prmtop, restrt)
 
         # calculate necessary amber items
-        p = openmol.amber_parm7.build(p)
+        p = OpenMol.amber_parm7.build(p)
 
         # calculate necessary lammps items
-        p = openmol.lammps_full.build(p)
+        p = OpenMol.lammps_full.build(p)
 
         # set title
         p.title = f"Polymer System with GAFF2"
@@ -221,7 +272,7 @@ class GAFF2:
         p = self._update_box_from_emc(emc_prefix, p)
 
         # write lammps data file
-        lmp = openmol.lammps_full.Writer(p, self.lammps_data)
+        lmp = OpenMol.lammps_full.Writer(p, self.lammps_data)
         lmp.write()
 
 
@@ -233,8 +284,11 @@ class GAFF2:
 
 if __name__ == "__main__":
     # Test environment, if executed directly.
+    smiles = "[*]C(=O)OC(C)C[*]"
+    end_smiles = "*C"
 
     gaff = GAFF2(working_dir="tools_tests")
-    gaff.load_or_create_mapping("[*]CC[*]", "*C", cleanup=True)
-    gaff.create_system(smiles='*CC*', density=1.0, end_cap_smiles="*C",
-                       natoms_total=1000, length=50, nchains=20)
+    gaff.load_or_create_mapping(smiles, end_smiles, cleanup=False)
+
+    gaff.create_system(smiles, density=1.0, end_cap_smiles=end_smiles,
+                       natoms_total=1000, length=50, nchains=20, cleanup=False)

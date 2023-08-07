@@ -1,10 +1,10 @@
 import os
-import openmol
-import openmol.psf
-import openmol.mapping
+import OpenMol
+import OpenMol.psf
+import OpenMol.mapping
 from pmd.util import Pmdlogging
 
-class EMC2GAFF(openmol.mapping.FFMap):
+class EMC2GAFF(OpenMol.mapping.FFMap):
     """ Mapping between EMC generated OPLSAA and GAFF2. """
     def __init__(self, emc_ff : str, output_dir : str = ".") -> None:
         super().__init__(emc_ff, "gaff2")
@@ -14,9 +14,9 @@ class EMC2GAFF(openmol.mapping.FFMap):
 
     def _read_emc_psf(self, input_psf : str, output : str):
         """ Read the EMC generated system.psf.gz and save as json. """
-        psf_file = openmol.psf.Reader()
+        psf_file = OpenMol.psf.Reader()
         psf_file.read(input_psf)
-        openmol.write_json(psf_file.Mol, output)
+        OpenMol.write_json(psf_file.Mol, output)
         Pmdlogging.info(f"Preprocess - {output} generated")
 
 
