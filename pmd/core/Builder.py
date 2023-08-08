@@ -476,7 +476,7 @@ class OpenMol(Builder):
             f.write(f'{"pair_modify":<15} mix arithmetic\n')
             f.write(f'{"bond_style":<15} harmonic\n')
             f.write(f'{"angle_style":<15} harmonic\n')
-            f.write(f'{"dihedral_style":<15} fourier\n')
+            f.write(f'{"dihedral_style":<15} harmonic\n')
             f.write(f'{"improper_style":<15} cvff\n')
             f.write(f'{"special_bonds":<15} amber\n')
             f.write(f'{"newton":<15} on\n')
